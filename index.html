@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>StayTools 스킬 디렉터리</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;700&family=Geist:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#/">
+      <span class="brand-mark">▲</span><span class="slash">/</span><span>StayTools</span>
+    </a>
+    <nav>
+      <a href="#/">스킬</a>
+      <a href="#/install">설치 방법</a>
+    </nav>
+  </header>
+
+  <main id="app"></main>
+
+  <footer class="footer">
+    호텔 운영용 Claude 스킬 모음 · <span id="footer-count"></span>
+  </footer>
+
+  <!-- build.py가 생성한 스킬 데이터 -->
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
