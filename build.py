@@ -69,7 +69,7 @@ REQUIREMENTS = {
     },
     "staytools-trip-payout": {
         "target": "트립닷컴 입점 숙소 (판매가 입력 방식)",
-        "systems": ["트립닷컴 eBooking"],
+        "systems": ["트립닷컴 eBooking", "Python 3 (계산기·HTML 콘솔)"],
         "notes": [
             BROWSER_NOTE,
             "판매가 입력 방식만 검증했습니다. 넷가·후불·VCC 계약은 미검증입니다.",
