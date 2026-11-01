@@ -52,7 +52,7 @@ REQUIREMENTS = {
     },
     "staytools-booking-rate-ops": {
         "target": "부킹닷컴 입점 숙소",
-        "systems": ["부킹닷컴 익스트라넷"],
+        "systems": ["부킹닷컴 익스트라넷", "Python 3 (계산기·HTML 콘솔)"],
         "notes": [
             BROWSER_NOTE,
             "판매가 변경 절차는 WINGSCMS 계열 예시입니다. 다른 채널 매니저는 화면이 다릅니다.",
