@@ -1,0 +1,320 @@
+{
+ "_note": "아고다 조사 결과 → HTML 콘솔 입력 파일. 이 파일은 '빈 양식'이다 — 숫자는 형식 예시이니 그 숙소의 값으로 전부 바꿔라. 모르는 값은 null 로 두고 open[] 에 확인 방법을 적어라.\n다만 null 을 넣으면 안 되는 자리가 셋 있다 — property.targets[].v / property.cmsPresets[] / commission.parts[].pct. 이 셋은 값이 없으면 그 항목을 통째로 빼라 (생성기가 걸러내지만 의미가 사라진다).\ncontent.mapping.total 처럼 화면에 안 나오는 총계는 키를 아예 빼면 '—' 로 표시된다.\n\ncommission: total = 정산으로 실제 확인된 보수. settingTotal = 포털에 설정된 값(둘이 다를 때만 쓴다).\n  ★ 계산기는 parts 의 합으로 돈다 — total 이 아니다. 안전하게 높은 쪽으로 잡으려면 parts 를 포털 설정대로 채워라.\n  보수에는 기본값이 없다. parts 도 total 도 비어 있으면 계산기의 보수가 0%로 열린다.\n  광고 숙소(Sponsored)·부킹홀딩스 광고는 parts 에 넣지 마라. 광고비는 입금가 공식 밖이다(programs.md 1장).\n\npromotions.groups: 계산기 UI 이자 아고다 중복 규칙 그 자체다.\n  mode=locked  항상 적용, 끌 수 없음 (Maximum Gain)\n  mode=single  카테고리당 1개 = 라디오. 첫 항목은 {nm:'없음', pct:0} 로 둬라.\n               실제로 2개가 켜져 있어도 예약엔 1개만 붙으므로 on:true 는 하나에만 주고,\n               나머지는 tag 에 '적용 중' 을 적어 정보를 살려라.\n  mode=multi   누적 = 체크박스. 알뜰 프로모션.\n  scroll=true  항목이 10개 넘으면 목록에 스크롤을 건다.\n  risk=true    켜면 안 되는 항목에 붉은 '위험' 표시.\n\npromotions.activeCount 는 포털이 표시한 건수, active[] 는 그중 식별한 것. 다르면 open[] 에 남겨라.\nratePlans 는 요금제 인벤토리(ID·상태). rooms[].plans 는 요금제별 '가격' 이라 용도가 다르다.\nprograms[].verified:false 면 프로그램 표에 '미확인' 배지가 붙는다.\nweekly / measurements / channels / ratePlans 는 비어 있으면 해당 카드가 자동으로 빠진다.\npromotions.active[].id 는 포털의 프로모션 ID(모르면 null), groups[].items[].id 는 계산기 내부 키라서 겹치지만 않으면 아무 문자열이나 된다.\nproperty.roundUnit 은 콘솔 계산기의 CMS 올림 단위(기본 5000)다. payout.py 는 100원 단위로 올림하므로 두 값이 달라 보일 수 있다.\ntax.multiplier 는 자료에 없으면 1.1(한국 부가세)을 넣고 verified:false 로 둔다.\n투숙객 이름·연락처·예약번호는 어디에도 적지 마라.",
+ "property": {
+  "name": "예시 호텔",
+  "agodaId": "0000000",
+  "surveyedAt": "YYYY-MM-DD",
+  "floor": null,
+  "floorNote": "입금가가 이 밑으로 내려가면 안 된다 (숙소가 정한 값)",
+  "roundUnit": 5000,
+  "targets": [
+   {
+    "label": "하한",
+    "v": null
+   }
+  ],
+  "cmsPresets": [],
+  "measurementNotes": [
+   "실측 대조 표 아래 붙일 주석. HTML 태그 허용."
+  ]
+ },
+ "commission": {
+  "total": null,
+  "verified": false,
+  "source": "",
+  "parts": [
+   {
+    "id": "contract",
+    "name": "계약 수수료",
+    "note": "고정",
+    "pct": null,
+    "on": true
+   },
+   {
+    "id": "agp",
+    "name": "AGP",
+    "note": "드롭다운으로 고르게 하려면 options (그 숙소에서 선택 가능한 요율)",
+    "pct": null,
+    "on": true,
+    "options": [
+     {
+      "v": 0,
+      "label": "미적용"
+     },
+     {
+      "v": 5,
+      "label": "5% (예시)"
+     }
+    ]
+   },
+   {
+    "id": "agx",
+    "name": "AGX",
+    "note": "슬라이더로 하려면 range:[min,max,step]",
+    "pct": null,
+    "on": true,
+    "range": [
+     1,
+     40,
+     1
+    ]
+   }
+  ],
+  "settingTotal": null,
+  "note": "포털 설정과 정산으로 확인된 보수가 다르면 여기에 이유를 적어라"
+ },
+ "tax": {
+  "multiplier": 1.1,
+  "verified": true,
+  "note": "표시가 × 1.1 = 세금포함 총액 (한국 부가세 기준. 다르면 바꿔라)"
+ },
+ "programs": [
+  {
+   "key": "agx",
+   "name": "AGX",
+   "status": "적용 중",
+   "range": "1~40%",
+   "setting": "2%",
+   "note": "순위가 더 안 오르는 지점이 실효 상한 (catalog.md 3장)",
+   "verified": true
+  },
+  {
+   "key": "mg",
+   "name": "Maximum Gain (Beds Network)",
+   "status": "Dynamic 적용 중",
+   "range": "Static ↔ Dynamic 택일 (off 없음)",
+   "setting": "Dynamic 30%",
+   "note": "할인 시뮬레이터에 안 나온다. Σ에 따로 더해야 한다. %는 예약의 프로모션 내역에서 읽는다.",
+   "verified": true
+  }
+ ],
+ "promotions": {
+  "activeCount": 3,
+  "inactiveCount": 12,
+  "worstCaseSigma": 55,
+  "sigmaBreakdown": [
+   {
+    "label": "프로그램 (MG)",
+    "pct": 30,
+    "rule": "항상"
+   },
+   {
+    "label": "메가세일 계열",
+    "pct": 10,
+    "rule": "여러 개 켜도 1개만"
+   },
+   {
+    "label": "알뜰 (누적)",
+    "pct": 10,
+    "rule": "무제한 누적 — 위험"
+   },
+   {
+    "label": "타겟팅 · 지역",
+    "pct": 5,
+    "rule": "카테고리당 1개"
+   }
+  ],
+  "active": [
+   {
+    "name": "메가 세일",
+    "id": "프로모션ID",
+    "kind": "메가세일",
+    "pct": 10,
+    "window": "주기적"
+   },
+   {
+    "name": "얼리버드",
+    "id": "프로모션ID",
+    "kind": "알뜰",
+    "pct": 10,
+    "window": "상시"
+   },
+   {
+    "name": "International Rate",
+    "id": "프로모션ID",
+    "kind": "타겟팅·지역",
+    "pct": 5,
+    "window": "상시"
+   }
+  ],
+  "groups": [
+   {
+    "_note": "계산기 UI. mode: locked(항상적용) | single(카테고리당 1개, 라디오) | multi(누적, 체크박스). scroll:true 면 목록에 스크롤을 건다.",
+    "key": "core",
+    "name": "성과 극대화",
+    "rule": "항상 적용",
+    "mode": "locked",
+    "items": [
+     {
+      "id": "mg",
+      "nm": "Maximum Gain",
+      "tag": "프로그램",
+      "pct": 30,
+      "on": true
+     }
+    ]
+   },
+   {
+    "key": "season",
+    "name": "시즌 · 메가세일",
+    "rule": "여러 개 켜도 예약엔 1개만",
+    "mode": "single",
+    "scroll": true,
+    "items": [
+     {
+      "id": "s0",
+      "nm": "없음",
+      "pct": 0
+     },
+     {
+      "id": "s1",
+      "nm": "메가 세일",
+      "tag": "ID · 적용 중",
+      "pct": 10,
+      "on": true
+     }
+    ]
+   },
+   {
+    "key": "saver",
+    "name": "알뜰",
+    "rule": "개수 제한 없음 — 전부 더해진다",
+    "mode": "multi",
+    "items": [
+     {
+      "id": "a1",
+      "nm": "얼리버드",
+      "tag": "ID",
+      "pct": 10,
+      "on": true
+     },
+     {
+      "id": "a2",
+      "nm": "객실 점유율",
+      "tag": "노출 혜택 없음",
+      "pct": 10,
+      "risk": true
+     }
+    ]
+   },
+   {
+    "key": "tRegion",
+    "name": "타겟팅 · 지역",
+    "rule": "카테고리당 1개",
+    "mode": "single",
+    "items": [
+     {
+      "id": "r0",
+      "nm": "없음",
+      "pct": 0
+     },
+     {
+      "id": "r1",
+      "nm": "International Rate",
+      "tag": "ID · 적용 중",
+      "pct": 5,
+      "on": true
+     }
+    ]
+   }
+  ]
+ },
+ "rooms": [
+  {
+   "name": "스탠다드",
+   "agodaId": "객실ID",
+   "plans": {
+    "Room Only": 150000
+   }
+  }
+ ],
+ "channels": [
+  {
+   "key": "agoda",
+   "name": "아고다",
+   "status": "live",
+   "cms": {
+    "WEEK": 150000,
+    "FRI": 180000,
+    "SAT": 210000
+   }
+  },
+  {
+   "key": "booking",
+   "name": "부킹닷컴",
+   "status": "planned",
+   "cms": {
+    "WEEK": 120000,
+    "FRI": 140000,
+    "SAT": 160000
+   }
+  }
+ ],
+ "measurements": [
+  {
+   "date": "MM/DD 요일",
+   "cms": 150000,
+   "displayedPreTax": 68182,
+   "note": "메가세일 할인액 13,636 = (150,000÷1.1)×10% 로 기준 확정"
+  }
+ ],
+ "content": {
+  "photos": {
+   "total": 40,
+   "lowRes": 1,
+   "untagged": 0,
+   "note": "메인 사진 해상도 요건 1024×768"
+  },
+  "reviews": {
+   "score": 8.1,
+   "count": 300,
+   "detail": {
+    "위치": 8.6,
+    "서비스": 8.2,
+    "청결": 7.8
+   }
+  },
+  "mapping": {
+   "total": 60,
+   "mapped": 20,
+   "unmapped": 40
+  }
+ },
+ "findings": [
+  {
+   "severity": "high",
+   "title": "알뜰 프로모션을 하나만 더 켜면 입금가 하한이 깨진다",
+   "detail": "알뜰은 누적이라 Σ가 55%→65%가 되면 평일 입금가가 하한 밑으로 떨어진다.",
+   "evidence": "프로모션 목록 적용 중 3건 · 중복 규칙 포털 원문",
+   "revised": null
+  },
+  {
+   "severity": "info",
+   "title": "예시 — 판정을 정정한 경우",
+   "detail": "정정 후의 결론.",
+   "evidence": "무엇을 보고 정정했는지",
+   "revised": "이전 판정과 왜 바뀌었는지"
+  }
+ ],
+ "open": [
+  "아직 확인 못 한 항목을 여기에. 무엇을 어디서 어떻게 확인하는지까지 적는다."
+ ],
+ "weekly": [
+  {
+   "_note": "요일별 일괄 표. 없으면 그 카드가 자동으로 빠진다. cms 가 비어 있는 행은 표에서 빠진다.",
+   "d": "월~목",
+   "set": "WEEK",
+   "cms": null,
+   "tgt": null
+  }
+ ],
+ "ratePlans": [
+  {
+   "_note": "요금제 인벤토리. rooms[].plans(가격)와 다른 것이다.",
+   "name": "",
+   "id": "",
+   "rooms": "전체",
+   "status": "적용 중"
+  }
+ ]
+}

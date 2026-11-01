@@ -1,0 +1,492 @@
+{
+ "_note": "가상 숙소의 채워진 예시다. 형식을 흉내내는 용도이며 실제 숙소의 값이 아니다. 이 숫자를 다른 숙소 계산에 쓰지 마라.",
+ "property": {
+  "name": "샘플 스테이 (가상 숙소)",
+  "agodaId": "0000000",
+  "surveyedAt": "2026-01-15",
+  "floor": 50000,
+  "floorNote": "이 밑으로 내려가면 안 된다 (운영자가 정한 값)",
+  "roundUnit": 5000,
+  "targets": [
+   {
+    "label": "하한",
+    "v": 50000
+   },
+   {
+    "label": "일~목",
+    "v": 55000
+   },
+   {
+    "label": "금",
+    "v": 65000
+   },
+   {
+    "label": "토",
+    "v": 75000
+   }
+  ],
+  "cmsPresets": [
+   140000,
+   150000,
+   180000,
+   210000
+  ],
+  "measurementNotes": [
+   "가상 조회 · 스탠다드 Room Only · 소비자 페이지와 포털 ARI 캘린더 대조 형식.",
+   "메가세일 할인액이 <b>(CMS÷1.1)×10%</b>와 원 단위까지 일치 — 할인은 <b>세전</b>에 붙고 기준값은 <b>Room Only 요금</b>이다.",
+   "⚠ <b>국내 IP에서 본 값이다.</b> 실측 50.0%는 MG 30 + 메가세일 10 + 얼리버드 10 = 50%와 일치 — International Rate 5%가 안 붙은 상태다. 해외 접속 손님은 Σ 55%일 수 있다."
+  ]
+ },
+ "commission": {
+  "total": 20,
+  "verified": true,
+  "source": "정산 역산",
+  "parts": [
+   {
+    "id": "contract",
+    "name": "계약 수수료",
+    "note": "고정",
+    "pct": 15,
+    "on": true
+   },
+   {
+    "id": "agp",
+    "name": "AGP",
+    "note": "아고다 성장 프로그램",
+    "pct": 5,
+    "on": true,
+    "options": [
+     {
+      "v": 0,
+      "label": "미적용 (0%)"
+     },
+     {
+      "v": 5,
+      "label": "5%"
+     },
+     {
+      "v": 10,
+      "label": "10%"
+     }
+    ]
+   },
+   {
+    "id": "agx",
+    "name": "AGX",
+    "note": "순위 입찰 · 1~40% · 다음 달 1일 개시",
+    "pct": 2,
+    "on": true,
+    "range": [
+     1,
+     40,
+     1
+    ]
+   }
+  ],
+  "settingTotal": 22,
+  "note": "포털 설정은 22%(계약 15 + AGP 5 + AGX 2)지만 정산으로 확인된 보수는 아직 20%뿐이다. AGX 2%는 개시 전이라 정산 사례가 0건. 하한을 지키려면 높은 쪽(22%)으로 잡는 편이 안전하다."
+ },
+ "tax": {
+  "multiplier": 1.1,
+  "verified": true
+ },
+ "programs": [
+  {
+   "key": "agx",
+   "name": "AGX",
+   "status": "적용 예정",
+   "range": "1~40%",
+   "setting": "2%",
+   "note": "슬라이더 곡선상 3%에서 순위가 더 오르지 않는다. 그 위는 낭비.",
+   "verified": true
+  },
+  {
+   "key": "mg",
+   "name": "Maximum Gain (Beds Network)",
+   "status": "Dynamic 적용 중",
+   "range": "Static ↔ Dynamic 택일 (off 없음)",
+   "setting": "Dynamic 30%",
+   "note": "할인 시뮬레이터에 안 나온다. Σ에 따로 더해야 한다.",
+   "verified": true
+  },
+  {
+   "key": "intelligence",
+   "name": "인텔리전스 프로그램",
+   "status": "미적용",
+   "range": null,
+   "setting": null,
+   "note": "수수료 할인율 미조회",
+   "verified": false
+  }
+ ],
+ "promotions": {
+  "activeCount": 4,
+  "inactiveCount": 9,
+  "worstCaseSigma": 55,
+  "sigmaBreakdown": [
+   {
+    "label": "Maximum Gain",
+    "pct": 30,
+    "rule": "프로그램 · 항상 적용"
+   },
+   {
+    "label": "메가세일 계열",
+    "pct": 10,
+    "rule": "2개 켜져 있어도 1개만 붙는다"
+   },
+   {
+    "label": "알뜰 (얼리버드)",
+    "pct": 10,
+    "rule": "누적 무제한 — 하나만 더 켜면 하한이 깨진다"
+   },
+   {
+    "label": "타겟팅 · 지역",
+    "pct": 5,
+    "rule": "카테고리당 1개"
+   }
+  ],
+  "active": [
+   {
+    "name": "메가 세일",
+    "id": "9000001",
+    "kind": "메가세일",
+    "pct": 10,
+    "window": "주기적"
+   },
+   {
+    "name": "VIP 사전 판매 - 메가 세일",
+    "id": "9000002",
+    "kind": "메가세일",
+    "pct": 5,
+    "window": "판매 기간 한정"
+   },
+   {
+    "name": "얼리버드 프로모션",
+    "id": "9000003",
+    "kind": "알뜰",
+    "pct": 10,
+    "window": "상시"
+   },
+   {
+    "name": "International Rate",
+    "id": "9000004",
+    "kind": "타겟팅·지역",
+    "pct": 5,
+    "window": "상시"
+   }
+  ],
+  "groups": [
+   {
+    "key": "core",
+    "name": "성과 극대화",
+    "rule": "항상 적용 · 예약마다 붙는다",
+    "mode": "locked",
+    "items": [
+     {
+      "id": "mg",
+      "nm": "Maximum Gain",
+      "tag": "프로그램 · 시뮬레이터 미포함",
+      "pct": 30,
+      "on": true
+     }
+    ]
+   },
+   {
+    "key": "season",
+    "name": "시즌 · 메가세일",
+    "rule": "여러 개 켜도 예약엔 1개만 붙는다",
+    "mode": "single",
+    "scroll": true,
+    "items": [
+     {
+      "id": "s0",
+      "nm": "없음",
+      "pct": 0
+     },
+     {
+      "id": "s9000001",
+      "nm": "메가 세일",
+      "tag": "9000001 · 적용 중",
+      "pct": 10,
+      "on": true
+     },
+     {
+      "id": "s9000002",
+      "nm": "VIP 사전 판매 - 메가 세일",
+      "tag": "9000002 · 적용 중",
+      "pct": 5
+     },
+     {
+      "id": "sowl",
+      "nm": "올빼미 세일",
+      "tag": "심야",
+      "pct": 20
+     },
+     {
+      "id": "sxmas",
+      "nm": "크리스마스 세일",
+      "tag": "12월",
+      "pct": 15
+     }
+    ]
+   },
+   {
+    "key": "tRegion",
+    "name": "타겟팅 · 지역",
+    "rule": "카테고리당 1개",
+    "mode": "single",
+    "items": [
+     {
+      "id": "r0",
+      "nm": "없음",
+      "pct": 0
+     },
+     {
+      "id": "r9000004",
+      "nm": "International Rate",
+      "tag": "9000004 · 적용 중",
+      "pct": 5,
+      "on": true
+     },
+     {
+      "id": "rdom",
+      "nm": "Domestic",
+      "tag": "국내 손님 비중이 높으면 사실상 전체할인",
+      "pct": 10
+     }
+    ]
+   },
+   {
+    "key": "tPlat",
+    "name": "타겟팅 · 플랫폼",
+    "rule": "카테고리당 1개",
+    "mode": "single",
+    "items": [
+     {
+      "id": "p0",
+      "nm": "없음",
+      "pct": 0,
+      "on": true
+     },
+     {
+      "id": "pmob",
+      "nm": "Mobile",
+      "pct": 10
+     }
+    ]
+   },
+   {
+    "key": "saver",
+    "name": "알뜰 프로모션",
+    "rule": "개수 제한 없음 — 전부 더해진다",
+    "mode": "multi",
+    "scroll": true,
+    "items": [
+     {
+      "id": "a9000003",
+      "nm": "얼리버드 (리드타임 7일↑)",
+      "tag": "9000003 · 적용 중",
+      "pct": 10,
+      "on": true
+     },
+     {
+      "id": "a9000005",
+      "nm": "마감 임박",
+      "tag": "9000005",
+      "pct": 10
+     },
+     {
+      "id": "a9000006",
+      "nm": "장기 투숙 3박↑",
+      "tag": "9000006",
+      "pct": 5
+     },
+     {
+      "id": "a9000007",
+      "nm": "객실 점유율",
+      "tag": "9000007 · 노출 혜택 없음",
+      "pct": 10,
+      "risk": true
+     }
+    ]
+   }
+  ]
+ },
+ "rooms": [
+  {
+   "name": "스탠다드",
+   "agodaId": "R-0001",
+   "plans": {
+    "Room Only": 150000
+   }
+  },
+  {
+   "name": "디럭스",
+   "agodaId": "R-0002",
+   "plans": {
+    "Room Only": 170000
+   }
+  },
+  {
+   "name": "패밀리",
+   "agodaId": "R-0003",
+   "plans": {
+    "Room Only": 200000
+   }
+  }
+ ],
+ "channels": [
+  {
+   "key": "domestic",
+   "name": "국내 OTA",
+   "status": "planned",
+   "cms": {
+    "WEEK": 80000,
+    "FRI": 95000,
+    "SAT": 115000
+   }
+  },
+  {
+   "key": "booking",
+   "name": "부킹닷컴",
+   "status": "planned",
+   "cms": {
+    "WEEK": 120000,
+    "FRI": 140000,
+    "SAT": 160000
+   }
+  },
+  {
+   "key": "agoda",
+   "name": "아고다",
+   "status": "live",
+   "cms": {
+    "WEEK": 150000,
+    "FRI": 180000,
+    "SAT": 210000
+   }
+  }
+ ],
+ "measurements": [
+  {
+   "date": "1/21 수",
+   "cms": 150000,
+   "displayedPreTax": 68182,
+   "note": "메가세일 13,636 = (150,000÷1.1)×10%"
+  },
+  {
+   "date": "1/23 금",
+   "cms": 180000,
+   "displayedPreTax": 81818,
+   "note": ""
+  },
+  {
+   "date": "1/24 토",
+   "cms": 210000,
+   "displayedPreTax": 95455,
+   "note": ""
+  }
+ ],
+ "content": {
+  "photos": {
+   "total": 42,
+   "lowRes": 1,
+   "untagged": 3,
+   "note": "카테고리 합산 42장. 저해상도 1건은 메인 아님. 요건 1024×768 / 15MB / PNG·JPG·JPEG"
+  },
+  "reviews": {
+   "score": 8.2,
+   "count": 312,
+   "detail": {
+    "위치": 8.8,
+    "서비스": 8.3,
+    "가격 대비 만족도": 8.0,
+    "부대시설": 7.9,
+    "숙소 청결 상태": 7.7
+   }
+  },
+  "mapping": {
+   "mapped": 18,
+   "unmapped": 25,
+   "note": "포털이 총계를 숫자로 안 보여주면 total 키를 뺀다."
+  }
+ },
+ "findings": [
+  {
+   "severity": "high",
+   "title": "일요일 요금세트는 최악값 Σ에서 이미 하한 미달이다",
+   "detail": "SUN 140,000 × (1−55%) × (1−22%) = 49,140원으로 하한 50,000원에 860원 모자란다. 포털 설정 보수(22%) 기준.",
+   "evidence": "CMS 요금세트 · 적용 중 프로모션 4건 · 보수 구성"
+  },
+  {
+   "severity": "high",
+   "title": "알뜰 프로모션을 하나만 더 켜면 평일 입금가 하한이 깨진다",
+   "detail": "알뜰은 누적이라 장기투숙 5%만 더해도 Σ 60% → 평일 입금가 46,800원.",
+   "evidence": "중복 규칙 포털 원문 · 적용 중 4건"
+  },
+  {
+   "severity": "med",
+   "title": "미매핑 객실 25개",
+   "detail": "포털에서 직접 못 지운다. 매핑 문제 신고로 아고다에 요청해야 한다.",
+   "evidence": "객실 매핑 페이지"
+  },
+  {
+   "severity": "info",
+   "title": "지역 타겟팅은 해외 손님에게 실제로 붙는다",
+   "detail": "해외 거주 손님 예약 1건에 International Rate가 적용됐다. 국내 IP 조회의 Σ 50%는 '국내 손님이 보는 값'이고 해외는 5%p 더 높다.",
+   "evidence": "해외 거주 손님 예약 1건의 프로모션 내역",
+   "revised": "처음엔 지역 타겟팅이 실제로는 안 붙는다고 봤으나, 예약 프로모션 내역을 확인하고 정정했다."
+  }
+ ],
+ "open": [
+  "AGX 고급옵션 '마감 임박 예약 수수료 2배' on/off — AGX 캠페인 수정 화면 하단에서 확인",
+  "인텔리전스 프로그램 수수료 할인율 — 프로그램 허브에서 조회 (보수를 낮추는 유일한 경로)",
+  "AGX 2% 개시 이후 실제 보수가 22%로 정산되는지 — 개시일 이후 투숙분 정산서"
+ ],
+ "weekly": [
+  {
+   "d": "월~목",
+   "set": "WEEK",
+   "cms": 150000,
+   "tgt": 55000
+  },
+  {
+   "d": "금",
+   "set": "FRI",
+   "cms": 180000,
+   "tgt": 65000
+  },
+  {
+   "d": "토",
+   "set": "SAT",
+   "cms": 210000,
+   "tgt": 75000
+  },
+  {
+   "d": "일",
+   "set": "SUN",
+   "cms": 140000,
+   "tgt": 55000
+  }
+ ],
+ "ratePlans": [
+  {
+   "name": "Room Only (환불 가능)",
+   "id": "P-0001",
+   "rooms": "전체",
+   "status": "적용 중"
+  },
+  {
+   "name": "Room Only (환불 불가)",
+   "id": "P-0002",
+   "rooms": "전체",
+   "status": "적용 중"
+  },
+  {
+   "name": "조식 포함",
+   "id": "P-0003",
+   "rooms": "2",
+   "status": "미적용"
+  }
+ ]
+}

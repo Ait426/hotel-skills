@@ -20,16 +20,14 @@ DOWNLOAD_DIR = ROOT / "downloads"
 DATA_FILE = ROOT / "data.js"
 LOG_FILE = ROOT / "build.log"
 
-DEFAULT_SOURCE = Path(
-    r"C:\Users\user\AppData\Roaming\Claude\local-agent-mode-sessions\skills-plugin"
-    r"\f9f7daa0-8632-45cb-aee6-7de9b0e31391\14b0145a-01ad-43db-aabd-af9c29038afb\skills"
-)
+DEFAULT_SOURCE = ROOT / "skills"
 
 # 공개 대상 스킬과 카테고리 (실제 숙소 ID가 들어간 개인용 스킬은 넣지 않는다)
 SKILLS = {
     "staytools-agoda-audit": "요금·입금가",
     "staytools-booking-rate-ops": "요금·입금가",
     "staytools-expedia-payout": "요금·입금가",
+    "staytools-trip-payout": "요금·입금가",
     "staytools-ota-payout-floor-design": "요금·입금가",
     "staytools-ota-inventory-audit": "재고·운영",
     "staytools-hotel-cleaning-assignment-manager": "재고·운영",
@@ -68,13 +66,22 @@ REQUIREMENTS = {
             "채널 매니저 절차는 WINGSCMS 계열 예시입니다.",
         ],
     },
+    "staytools-trip-payout": {
+        "target": "트립닷컴 입점 숙소 (판매가 입력 방식)",
+        "systems": ["트립닷컴 eBooking"],
+        "notes": [
+            BROWSER_NOTE,
+            "판매가 입력 방식만 검증했습니다. 넷가·후불·VCC 계약은 미검증입니다.",
+            "캠페인과 회원 할인의 중복, 프로모션 적용 기준은 숙소마다 실예약으로 확인해야 합니다.",
+        ],
+    },
     "staytools-ota-payout-floor-design": {
         "target": "OTA 할인 구조를 설계하는 숙소",
         "systems": [],
         "notes": ["채널 화면을 읽지 않는 계산·설계 스킬입니다. 실측 확인은 소비자 페이지에서 따로 해야 합니다."],
     },
     "staytools-ota-inventory-audit": {
-        "target": "CMS로 묶이지 않은 OTA 채널을 PMS와 대조해야 하는 숙소",
+        "target": "OTA 채널 재고를 PMS와 직접 대조해야 하는 숙소",
         "systems": ["PMS(또는 엑셀로 내보낸 잔여표)", "야놀자·여기어때 모텔 등 파트너센터"],
         "notes": [
             BROWSER_NOTE + " 도구가 없으면 받은 표로 판정과 조치안까지 작성합니다.",
