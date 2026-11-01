@@ -219,7 +219,10 @@
     body.innerHTML = list.map((s, idx) => `
       <tr class="row" data-slug="${esc(s.slug)}">
         <td class="rank">${idx + 1}</td>
-        <td><span class="skill-name">${esc(shortName(s))}</span><span class="skill-sub">${esc(s.category)}</span></td>
+        <td>
+          <span class="skill-name">${esc(shortName(s))}</span><span class="skill-sub">${esc(s.category)}</span>
+          <div class="skill-target">대상: ${esc(s.target)}</div>
+        </td>
         <td class="hide-sm">${fileBars(s.files.length)}</td>
         <td class="num">${formatSize(s.zipSize)}</td>
       </tr>`).join("");
@@ -248,7 +251,7 @@
           </div>
         </div>
         <div>
-          <p class="tagline">스킬은 AI 에이전트에 붙이는 <b>재사용 가능한 업무 지식</b>입니다. zip 하나만 내려받아 풀면 OTA 요금·입금가 계산, 재고 대조, 청소 배정 같은 <b>호텔 운영 절차</b>를 에이전트가 그대로 따라 합니다.</p>
+          <p class="tagline">스킬은 AI 에이전트에 붙이는 <b>재사용 가능한 업무 지식</b>입니다. zip을 내려받아 설치하고 <b>내 숙소 값</b>을 알려 주면 OTA 요금·입금가 계산, 재고 대조, 청소 배정 같은 호텔 운영 절차를 에이전트가 따라 합니다. 스킬마다 필요한 채널과 입력값이 다르니 상세 페이지의 <b>사용 조건</b>을 먼저 확인하세요.</p>
           <div class="try">
             <p class="label">사용 가능한 에이전트</p>
             <div class="agents">
@@ -314,6 +317,20 @@
           <section class="section">
             <p class="label">요약</p>
             <div class="summary">${esc(skill.description)}</div>
+          </section>
+
+          <section class="section">
+            <p class="label">사용 조건</p>
+            <dl class="req">
+              <dt>대상</dt>
+              <dd>${esc(skill.target)}</dd>
+              <dt>필요한 시스템</dt>
+              <dd>${skill.systems.length ? skill.systems.map(esc).join(" · ") : "없음"}</dd>
+              <dt>준비할 입력</dt>
+              <dd><ul>${skill.inputs.map((t) => `<li>${esc(t)}</li>`).join("")}</ul></dd>
+              <dt>알아 둘 점</dt>
+              <dd><ul>${skill.notes.map((t) => `<li>${esc(t)}</li>`).join("")}</ul></dd>
+            </dl>
           </section>
 
           <section class="section">
@@ -405,7 +422,7 @@
             "```",
             "macOS·Linux는 `unzip -o <파일>.zip -d ~/.claude/skills` 를 씁니다.",
             "## 3. 숙소 정보 채우기",
-            "일부 스킬에는 `hotel-profile.example.md` 같은 예시 파일이 있습니다. 내 숙소 값으로 채워 쓰고, **비밀번호·토큰·투숙객 정보는 넣지 않습니다.**",
+            "스킬마다 필요한 채널과 입력값이 다릅니다. 상세 페이지의 **사용 조건**을 확인하세요. 일부 스킬에는 `hotel-profile.example.md` 같은 예시 파일이 있습니다. 내 숙소 값으로 채워 쓰고, **비밀번호·토큰·투숙객 정보는 넣지 않습니다.**",
             "## 4. 확인",
             "Claude Code를 다시 열고 스킬 이름이나 관련 업무(예: \"아고다 입금가 점검해줘\")를 말하면 스킬이 동작합니다.",
           ].join("\n"))}</div>

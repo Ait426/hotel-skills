@@ -38,6 +38,63 @@ SKILLS = {
 
 GUIDE_NAME = "사용 안내.md"
 
+BROWSER_NOTE = "화면 조회·수정은 브라우저 조작 도구가 있는 환경에서만 됩니다."
+
+# 스킬별 사용 조건 (각 스킬의 SKILL.md·사용 안내 내용을 근거로 적는다)
+REQUIREMENTS = {
+    "staytools-agoda-audit": {
+        "target": "아고다 입점 숙소",
+        "systems": ["아고다 파트너 포털"],
+        "notes": [
+            BROWSER_NOTE + " 도구가 없으면 가져온 자료로 계산합니다.",
+            "채널 매니저가 있으면 채널별 요금 비교까지 됩니다. 절차는 YFlux·WINGSCMS 기준 예시입니다.",
+            "세금 배수 기본값은 한국 부가세(1.1)입니다. 다른 나라 숙소는 값을 바꿔야 합니다.",
+        ],
+    },
+    "staytools-booking-rate-ops": {
+        "target": "부킹닷컴 입점 숙소",
+        "systems": ["부킹닷컴 익스트라넷"],
+        "notes": [
+            BROWSER_NOTE,
+            "판매가 변경 절차는 WINGSCMS 계열 예시입니다. 다른 채널 매니저는 화면이 다릅니다.",
+        ],
+    },
+    "staytools-expedia-payout": {
+        "target": "익스피디아 입점 숙소",
+        "systems": ["익스피디아 파트너센트럴"],
+        "notes": [
+            BROWSER_NOTE,
+            "프로모션 구성 예시는 한국 POS 기준이고, 세금 배수도 한국 부가세(1.1) 예시입니다.",
+            "채널 매니저 절차는 WINGSCMS 계열 예시입니다.",
+        ],
+    },
+    "staytools-ota-payout-floor-design": {
+        "target": "OTA 할인 구조를 설계하는 숙소",
+        "systems": [],
+        "notes": ["채널 화면을 읽지 않는 계산·설계 스킬입니다. 실측 확인은 소비자 페이지에서 따로 해야 합니다."],
+    },
+    "staytools-ota-inventory-audit": {
+        "target": "CMS로 묶이지 않은 OTA 채널을 PMS와 대조해야 하는 숙소",
+        "systems": ["PMS(또는 엑셀로 내보낸 잔여표)", "야놀자·여기어때 모텔 등 파트너센터"],
+        "notes": [
+            BROWSER_NOTE + " 도구가 없으면 받은 표로 판정과 조치안까지 작성합니다.",
+            "화면 절차는 YFlux PMS·야놀자·여기어때 모텔 기준입니다. 다른 시스템은 절차를 맞춰야 합니다.",
+        ],
+    },
+    "staytools-hotel-cleaning-assignment-manager": {
+        "target": "청소 직원을 배정하는 호텔",
+        "systems": [],
+        "notes": ["대화로 알려 준 내용으로 배정합니다. 외부 시스템 연결은 필요 없습니다."],
+        # 사용 안내에 입력 항목이 없어 SKILL.md의 필수 입력을 옮겨 적는다
+        "inputs": ["청소 가능한 직원 수 또는 명단", "청소할 객실 목록"],
+    },
+    "staytools-product-planning": {
+        "target": "호텔과 무관하게 누구나",
+        "systems": [],
+        "notes": ["대화형 사고 보조 스킬입니다. 시장 수요나 매출을 보장하지 않습니다."],
+    },
+}
+
 log = logging.getLogger("build")
 
 
@@ -70,6 +127,14 @@ def parse_frontmatter(text):
     return meta, text[match.end():]
 
 
+def parse_inputs(guide):
+    """사용 안내의 '준비할 입력' 절에서 목록 항목만 꺼낸다."""
+    match = re.search(r"^## 준비할 입력\s*\n(.*?)(?=^## |\Z)", guide, re.S | re.M)
+    if not match:
+        return []
+    return [line[2:].strip() for line in match.group(1).splitlines() if line.startswith("- ")]
+
+
 def make_zip(skill_dir, name):
     """스킬 폴더 전체를 <스킬명>/... 구조로 압축한다."""
     DOWNLOAD_DIR.mkdir(exist_ok=True)
@@ -96,10 +161,19 @@ def build_skill(source, name, category):
     latest = max(f.stat().st_mtime for f in files)
     zip_path = make_zip(skill_dir, name)
 
+    req = REQUIREMENTS[name]
+    inputs = parse_inputs(guide) or req.get("inputs", [])
+    if not inputs:
+        log.warning("준비할 입력 항목 없음: %s", name)
+
     return {
         "name": meta.get("name", name),
         "slug": name,
         "category": category,
+        "target": req["target"],
+        "systems": req["systems"],
+        "notes": req["notes"],
+        "inputs": inputs,
         "description": meta.get("description", ""),
         "body": body.strip(),
         "guide": guide.strip(),

@@ -141,6 +141,7 @@ code, pre, kbd { font-family: var(--mono); }
 .rank { width: 44px; color: var(--muted); font-family: var(--mono); }
 .skill-name { font-weight: 600; }
 .skill-sub { margin-left: 8px; color: var(--muted); font: 12px var(--mono); }
+.skill-target { margin-top: 2px; color: var(--muted); font-size: 12.5px; }
 .num { text-align: right !important; font-family: var(--mono); white-space: nowrap; }
 .bars { display: flex; gap: 2px; align-items: flex-end; height: 18px; }
 .bars i { width: 4px; background: var(--line-2); }
@@ -171,6 +172,16 @@ code, pre, kbd { font-family: var(--mono); }
   background: var(--panel); border: 1px solid var(--line);
   font-weight: 500; line-height: 1.7;
 }
+
+/* 사용 조건 */
+.req {
+  display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 12px 16px;
+  margin: 0; padding: 20px; border-radius: 8px;
+  background: var(--panel); border: 1px solid var(--line);
+}
+.req dt { color: var(--muted); font: 12px/1.9 var(--mono); }
+.req dd { margin: 0; }
+.req ul { margin: 0; padding-left: 18px; }
 
 /* 마크다운 본문 */
 .md {
@@ -245,4 +256,6 @@ code, pre, kbd { font-family: var(--mono); }
   .hide-sm { display: none; }
   #app, .topbar { padding-left: 16px; padding-right: 16px; }
   .detail h1 { font-size: 30px; }
+  .req { grid-template-columns: 1fr; gap: 4px; }
+  .req dd { margin-bottom: 10px; }
 }
