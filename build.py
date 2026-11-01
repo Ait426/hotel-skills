@@ -60,7 +60,7 @@ REQUIREMENTS = {
     },
     "staytools-expedia-payout": {
         "target": "익스피디아 입점 숙소",
-        "systems": ["익스피디아 파트너센트럴"],
+        "systems": ["익스피디아 파트너센트럴", "Python 3 (계산기·HTML 콘솔)"],
         "notes": [
             BROWSER_NOTE,
             "프로모션 구성 예시는 한국 POS 기준이고, 세금 배수도 한국 부가세(1.1) 예시입니다.",
