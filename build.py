@@ -29,6 +29,7 @@ SKILLS = {
     "staytools-expedia-payout": "요금·입금가",
     "staytools-trip-payout": "요금·입금가",
     "staytools-ota-payout-floor-design": "요금·입금가",
+    "staytools-sales-analysis": "매출 분석",
     "staytools-ota-inventory-audit": "재고·운영",
     "staytools-hotel-cleaning-assignment-manager": "재고·운영",
     "staytools-product-planning": "기획",
@@ -79,6 +80,15 @@ REQUIREMENTS = {
         "target": "OTA 할인 구조를 설계하는 숙소",
         "systems": [],
         "notes": ["채널 화면을 읽지 않는 계산·설계 스킬입니다. 실측 확인은 소비자 페이지에서 따로 해야 합니다."],
+    },
+    "staytools-sales-analysis": {
+        "target": "PMS 예약 내보내기 엑셀이 있는 숙소",
+        "systems": ["PMS 예약 내보내기 엑셀", "Python (pandas, numpy, openpyxl)"],
+        "notes": [
+            "YFlux 내보내기로만 실제 검증했습니다. 다른 PMS는 열 매핑을 직접 맞춰야 하고 미검증으로 표시됩니다.",
+            "수수료·쿠폰·부가세는 표시용이며 실수령 계산에 쓰지 않습니다.",
+            "고객명·연락처가 든 원본 파일은 공유하지 마세요.",
+        ],
     },
     "staytools-ota-inventory-audit": {
         "target": "OTA 채널 재고를 PMS와 직접 대조해야 하는 숙소",
