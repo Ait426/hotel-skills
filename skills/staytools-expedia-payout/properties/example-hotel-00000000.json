@@ -41,6 +41,11 @@
  "ledger": [
   { "label": "예약 A", "bookedOn": "당일", "promo": "KR Same-day-Members 30%", "pretax": 150000, "after": 105000, "paid": 115500, "accelRate": 5, "payout": 92925 }
  ],
+ "audit": [
+  { "area": "노출", "item": "상품 강도", "value": "62/100 (요금 피드백 경쟁사 중 3위)", "status": "bad", "rule": "가상 기준 80점", "action": "요금 경쟁력 피드백의 반복 문제부터 확인", "source": "노출 순위 화면" },
+  { "area": "콘텐츠", "item": "객실 설명 이상 문구", "value": "2개 객실", "status": "warn", "action": "객실 용품 설정 확인", "source": "사진 화면 객실 설명" },
+  { "area": "후기", "item": "답변 대기 후기", "value": "0건", "status": "ok", "source": "투숙 후 이용 후기" }
+ ],
  "open": [
   { "item": "패키지 배수 p 의 금·토 값", "how": "EPC 요금 달력에서 (P) 값을 요일별로 읽는다" }
  ]
