@@ -49,3 +49,13 @@ window.__payments = async function(){
   }
   return out;
 };
+
+// 점검 화면 본문만 읽는다. 왼쪽 메뉴·머리글 글자를 빼고 이메일과 8자리 이상 번호·전화번호를 가린다.
+// 메인·예약·메시지·리뷰 목록 화면에는 쓰지 않는다. 투숙객 이름이 본문에 있다.
+window.__ebText = function(max){
+  const nav=[...document.querySelectorAll('aside,nav,[class*="menu"],[class*="Menu"],[class*="sider"],[class*="header"],[class*="Header"]')];
+  let t=document.body.innerText;
+  for(const n of nav){ const x=(n.innerText||'').trim(); if(x.length>20) t=t.split(x).join(' '); }
+  t=t.replace(/\s+/g,' ').replace(/[\w.+-]+@[\w.-]+/g,'@').replace(/\b\d{8,}\b/g,'#').replace(/\+?\d[\d -]{8,}\d/g,'#');
+  return t.slice(0,max||3000);
+};

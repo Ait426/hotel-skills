@@ -12,37 +12,188 @@
  "coef": {
   "c": 15,
   "m": 10,
-  "verified": { "c": true, "m": true },
+  "verified": {
+   "c": true,
+   "m": true
+  },
   "source": "가상 예약 지불 정보 1건"
  },
  "plans": [
-  { "name": "무료 취소", "r": 1, "verified": true },
-  { "name": "환불불가", "r": 0.9, "verified": true }
+  {
+   "name": "무료 취소",
+   "r": 1,
+   "verified": true
+  },
+  {
+   "name": "환불불가",
+   "r": 0.9,
+   "verified": true
+  }
  ],
  "rooms": [
-  { "name": "스탠다드", "rates": { "WEEK": 200000, "FRI": 230000, "SAT": 260000 } },
-  { "name": "스위트", "rates": { "WEEK": 300000, "FRI": 340000, "SAT": 380000 } }
+  {
+   "name": "스탠다드",
+   "rates": {
+    "WEEK": 200000,
+    "FRI": 230000,
+    "SAT": 260000
+   }
+  },
+  {
+   "name": "스위트",
+   "rates": {
+    "WEEK": 300000,
+    "FRI": 340000,
+    "SAT": 380000
+   }
+  }
  ],
  "promotions": [
-  { "name": "샘플 Country Banner", "type": "campaign", "pct": 50, "countries": "아시아 목록", "rooms": [], "status": "적용" },
-  { "name": "샘플 Package", "type": "package", "pct": 45, "countries": "제한 없음", "rooms": [], "status": "적용" },
-  { "name": "샘플 XPOS", "type": "xpos", "pct": 30, "countries": "서양 목록", "rooms": ["스탠다드"], "status": "적용" },
-  { "name": "샘플 연박 혜택", "type": "minStay", "pct": 40, "countries": "아시아 목록", "rooms": [], "status": "적용" }
+  {
+   "name": "샘플 Country Banner",
+   "type": "campaign",
+   "pct": 50,
+   "countries": "아시아 목록",
+   "rooms": [],
+   "status": "적용"
+  },
+  {
+   "name": "샘플 Package",
+   "type": "package",
+   "pct": 45,
+   "countries": "제한 없음",
+   "rooms": [],
+   "status": "적용"
+  },
+  {
+   "name": "샘플 XPOS",
+   "type": "xpos",
+   "pct": 30,
+   "countries": "서양 목록",
+   "rooms": [
+    "스탠다드"
+   ],
+   "status": "적용"
+  },
+  {
+   "name": "샘플 연박 혜택",
+   "type": "minStay",
+   "pct": 40,
+   "countries": "아시아 목록",
+   "rooms": [],
+   "status": "적용"
+  }
  ],
  "routes": [
-  { "name": "아시아 · 1박 · 비회원", "options": [ { "parts": ["샘플 Country Banner"], "member": false } ] },
-  { "name": "아시아 · 2박 이상 · 회원", "options": [ { "parts": ["샘플 Country Banner"], "member": false }, { "parts": ["샘플 연박 혜택"], "member": true } ] },
-  { "name": "교통 예약 · 회원", "options": [ { "parts": ["샘플 Package"], "member": true } ] },
-  { "name": "서양 · 회원", "options": [ { "parts": ["샘플 XPOS"], "member": true } ] }
+  {
+   "name": "아시아 · 1박 · 비회원",
+   "options": [
+    {
+     "parts": [
+      "샘플 Country Banner"
+     ],
+     "member": false
+    }
+   ]
+  },
+  {
+   "name": "아시아 · 2박 이상 · 회원",
+   "options": [
+    {
+     "parts": [
+      "샘플 Country Banner"
+     ],
+     "member": false
+    },
+    {
+     "parts": [
+      "샘플 연박 혜택"
+     ],
+     "member": true
+    }
+   ]
+  },
+  {
+   "name": "교통 예약 · 회원",
+   "options": [
+    {
+     "parts": [
+      "샘플 Package"
+     ],
+     "member": true
+    }
+   ]
+  },
+  {
+   "name": "서양 · 회원",
+   "options": [
+    {
+     "parts": [
+      "샘플 XPOS"
+     ],
+     "member": true
+    }
+   ]
+  }
  ],
  "targets": [
-  { "room": "스탠다드", "set": "WEEK", "payout": 70000, "basis": "최저 경로 · 환불불가" },
-  { "room": "스탠다드", "set": "FRI", "payout": 85000, "basis": "최저 경로 · 환불불가" }
+  {
+   "room": "스탠다드",
+   "set": "WEEK",
+   "payout": 70000,
+   "basis": "최저 경로 · 환불불가"
+  },
+  {
+   "room": "스탠다드",
+   "set": "FRI",
+   "payout": 85000,
+   "basis": "최저 경로 · 환불불가"
+  }
  ],
  "ledger": [
-  { "label": "예약 A", "bookedOn": "당일", "path": "아시아 · 2박 이상 · 회원", "promo": "연박 40 + 회원 10", "pprime": 180000, "sigma": 50, "extra": 0, "payout": 76500, "nights": 1 }
+  {
+   "label": "예약 A",
+   "bookedOn": "당일",
+   "path": "아시아 · 2박 이상 · 회원",
+   "promo": "연박 40 + 회원 10",
+   "pprime": 180000,
+   "sigma": 50,
+   "extra": 0,
+   "payout": 76500,
+   "nights": 1
+  }
+ ],
+ "audit": [
+  {
+   "area": "요금 경쟁력",
+   "item": "가격 매력도",
+   "value": "경쟁력 없는 요금 12개",
+   "status": "bad",
+   "rule": "0개",
+   "action": "요금 모니터링에서 더 싼 플랫폼과 재판매 여부 확인",
+   "source": "Property Health 대시보드"
+  },
+  {
+   "area": "리뷰",
+   "item": "청결도",
+   "value": "7.6 (경쟁권 8.2)",
+   "status": "warn",
+   "rule": "경쟁권 이상",
+   "action": "부정 리뷰의 청결 언급 확인",
+   "source": "리뷰 분석"
+  },
+  {
+   "area": "정보",
+   "item": "정보 점수",
+   "value": "95%",
+   "status": "ok",
+   "source": "호텔 개요"
+  }
  ],
  "open": [
-  { "item": "캠페인 + 회원 중복", "how": "예약 엑셀 Promotion 칸에서 캠페인이 찍힌 건의 회원 동반 여부를 센다" }
+  {
+   "item": "캠페인 + 회원 중복",
+   "how": "예약 엑셀 Promotion 칸에서 캠페인이 찍힌 건의 회원 동반 여부를 센다"
+  }
  ]
 }

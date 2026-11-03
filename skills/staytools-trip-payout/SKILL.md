@@ -1,6 +1,6 @@
 ---
 name: staytools-trip-payout
-description: "트립닷컴 eBooking에서 숙소를 조사하고, 판매가 → 원래 객실 요금 → 최종 객실 요금 → 지급액을 경로별로 계산하고, 목표 입금가에서 판매가를 역산하고, 실입금에서 판매가를 복원하고, 프로모션 영향과 재판매 밀림을 판정해 결과를 단일 HTML 콘솔로 뽑는 도구. 숙소 ID만 있으면 어느 숙소든 동작한다. 트립닷컴·eBooking 입금가·지급액·수수료·프로모션·캠페인·Country Banner·Package·에어텔·XPOS·연박 혜택·TripPlus·CoinPlus·재판매·타임 세일·[FD] 조식 이야기가 나오면 반드시 이 스킬을 먼저 읽어라. \"입금가가 왜 이래\", \"요금을 얼마로 올려야 하나\", \"이 프로모션 켜도 되나\", \"우리 요금이 안 보인다\", \"고객페이지 확인해\", \"점검해줘\", \"현황 봐줘\", \"숙소 조사해줘\", \"콘솔 만들어줘\", \"계산기 만들어줘\", \"다른 호텔도 해줘\"도 전부 해당한다."
+description: "트립닷컴 eBooking에서 숙소를 조사하고, 판매가 → 원래 객실 요금 → 최종 객실 요금 → 지급액을 경로별로 계산하고, 목표 입금가에서 판매가를 역산하고, 실입금에서 판매가를 복원하고, 프로모션 영향과 재판매 밀림을 판정해 결과를 단일 HTML 콘솔로 뽑는 도구. 숙소 ID만 있으면 어느 숙소든 동작한다. 트립닷컴·eBooking 입금가·지급액·수수료·프로모션·캠페인·Country Banner·Package·에어텔·XPOS·연박 혜택·TripPlus·CoinPlus·재판매·타임 세일·[FD] 조식·Property Health·가격 매력도·Preferred Partner·정보 점수·리뷰 점수 이야기가 나오면 반드시 이 스킬을 먼저 읽어라. \"입금가가 왜 이래\", \"요금을 얼마로 올려야 하나\", \"이 프로모션 켜도 되나\", \"우리 요금이 안 보인다\", \"고객페이지 확인해\", \"점검해줘\", \"현황 봐줘\", \"뭐가 부족해\", \"숙소 조사해줘\", \"콘솔 만들어줘\", \"계산기 만들어줘\", \"다른 호텔도 해줘\"도 전부 해당한다."
 ---
 
 # 트립닷컴 — 조사 · 계산 · 콘솔
@@ -42,7 +42,8 @@ eBooking을 읽을 도구가 없으면 조사를 지어내지 마라. 사용자�
 | "입금가 얼마", "요금 얼마로 올려야 하나", "이 프로모션 켜도 되나" | 계산만 | `references/pricing.md` → `scripts/payout.py` |
 | "실측했어?", "입금가가 이상하다" | 실측 대조 | `references/measure.md` → `payout.py booking` |
 | "우리 요금이 안 보인다", "고객페이지 확인해" | 노출 확인 | `references/portal-map.md` 재판매 구분 |
-| "점검해줘", "현황 봐줘", "숙소 조사해줘" | 조사 + 콘솔 | `references/portal-map.md` → 아래 전체 흐름 |
+| "점검해줘", "현황 봐줘", "뭐가 부족해" | 숙소 점검 + 콘솔 | `references/audit.md` → 아래 전체 흐름 |
+| "숙소 조사해줘" | 조사 + 콘솔 | `references/portal-map.md` → 아래 전체 흐름 |
 | "콘솔 만들어줘", "계산기 만들어줘" | 생성 | `assets/property.example.json` → `scripts/build_console.py` |
 | "요금세트", "WINGSCMS" | 운영 입력 | `references/cms.md` |
 
@@ -54,10 +55,11 @@ eBooking을 읽을 도구가 없으면 조사를 지어내지 마라. 사용자�
 1. 사전 점검  로그인 · 숙소 ID · 프로필과 기준 문서 · 요금 모드 확인
 2. 측정      My promotions OFF 칸·Details·Logs → 프로그램 → 달력 → 요금제 r → 최근 예약 지불 정보 → 고객 페이지
 3. 대조      payout.py booking 으로 공식과 지급액 비교 (허용 오차는 박수만큼)
-4. 기록      property.json 작성. 경로마다 겹치는 조합을 후보로 적는다
-5. 점검      build_console.py --check : 겹침 금지 조합 · 원장 불일치 확인
-6. 생성      build_console.py → HTML
-7. 전달      파일 + 측정값 표 + 못 읽은 것
+4. 숙소 점검  audit.md 순서로 노출·요금 경쟁력·정보·리뷰·프로그램 조회 → audit[]
+5. 기록      property.json 작성. 경로마다 겹치는 조합을 후보로 적는다
+6. 검사      build_console.py --check : 겹침 금지 조합 · 원장 불일치 · 점검 위험·주의 확인
+7. 생성      build_console.py → HTML
+8. 전달      파일 + 측정값 표 + 점검 결과 + 못 읽은 것
 ```
 
 ## 시작하기 전에 반드시 할 것 세 가지
@@ -108,8 +110,9 @@ P'     = 기준 판매가 × r                 ← 고객 페이지 취소선 �
 | `references/pricing.md` | 공식 · 호텔/트립 부담 · Σ 산정 · 중복 규칙 · 확인 필요 · 요금제 · `[FD]` |
 | `references/measure.md` | 입금가 확인 경로 · 진단 순서 · 실측 원장 · 데이터 수집 |
 | `references/portal-map.md` | eBooking 화면 지도 · 재판매 구분 · 함정 |
+| `references/audit.md` | 숙소 점검 경로 · 영역별 합격 기준 · audit[] 형식 |
 | `references/cms.md` | WINGSCMS를 쓰는 숙소의 입력 절차 |
-| `scripts/snippets.js` | 입력 · 재판매 판별 · 지불 정보 읽기 스니펫 |
+| `scripts/snippets.js` | 입력 · 재판매 판별 · 지불 정보 읽기 · 점검 화면 읽기(`__ebText`) 스니펫 |
 
 ## 계산기
 
@@ -134,8 +137,8 @@ python scripts/build_console.py property.json --check
 python scripts/build_console.py property.json -o 콘솔.html
 ```
 
-콘솔에는 계수, 계산기, 경로별 지급액과 목표 판정, 프로모션, 실측 원장, 미확인 항목이 들어간다. 값이 없는 카드는 자동으로 빠진다.
-`--check` 의 겹침 금지 조합과 원장 불일치는 요청받지 않았어도 보고한다.
+콘솔 맨 위에 점검 결과(위험 → 주의 → 못 읽음 → 합격)가 오고, 이어서 계수, 계산기, 경로별 지급액과 목표 판정, 프로모션, 실측 원장, 미확인 항목이 들어간다. 값이 없는 카드는 자동으로 빠진다.
+`--check` 의 겹침 금지 조합, 원장 불일치, 점검 위험·주의는 요청받지 않았어도 보고한다.
 
 ---
 
