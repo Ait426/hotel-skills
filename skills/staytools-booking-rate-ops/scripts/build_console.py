@@ -178,6 +178,29 @@ def ledger_card(d):
     return card("실측 원장 (예약 정산 내역)", f'<div class="body">{table(["예약", "경로", "손님 결제", "실입금", "입금 계수", "공식과 차이"], rows)}</div>') if rows else ""
 
 
+AUDIT = {"bad": ("bad", "위험"), "warn": ("warn", "주의"), "ok": ("ok", "합격"), "unknown": ("", "못 읽음")}
+
+
+def audit_card(d):
+    """점검 결과. 위험 → 주의 → 못 읽음 → 합격 순으로 보여 준다."""
+    order = {"bad": 0, "warn": 1, "unknown": 2, "ok": 3}
+    items = sorted(d.get("audit") or [], key=lambda x: order.get(x.get("status"), 2))
+    rows = []
+    for a in items:
+        cls, label = AUDIT.get(a.get("status"), AUDIT["unknown"])
+        act = f'<br><small>조치: {esc(a.get("action"))}</small>' if a.get("action") else ""
+        rule = f'<br><small>기준: {esc(a.get("rule"))}</small>' if a.get("rule") else ""
+        src = f'<br><small>근거: {esc(a.get("source"))}</small>' if a.get("source") else ""
+        rows.append(f'<tr><td><span class="tag {cls}">{label}</span></td><td class="l">{esc(a.get("area"))}</td>'
+                    f'<td class="l"><b>{esc(a.get("item"))}</b>{rule}{act}{src}</td><td class="l">{esc(a.get("value"))}</td></tr>')
+    if not rows:
+        return ""
+    count = {k: sum(1 for a in items if a.get("status") == k) for k in order}
+    summary = f'<p class="note" style="margin:0 0 10px">위험 {count["bad"]} · 주의 {count["warn"]} · 못 읽음 {count["unknown"]} · 합격 {count["ok"]}</p>'
+    return card("점검 결과", f'<div class="body">{summary}{table(["판정", "영역", "항목", "현재 값"], rows)}'
+                '<p class="note">조회 시점의 스냅샷이다. 프로그램 요건과 심사 일정은 화면 문구를 옮긴 것이다.</p></div>')
+
+
 def open_card(d):
     items = "".join(f'<li>{esc(o.get("item"))}<br><small>{esc(o.get("how"))}</small></li>' for o in d.get("open") or [])
     return card("미확인 항목", f'<div class="body"><ul>{items}</ul></div>') if items else ""
@@ -189,7 +212,7 @@ def render(d):
     payload.pop("_note", None)
     payload["leads"] = lead_points(d.get("promotions") or [])
     data = json.dumps(payload, ensure_ascii=False).replace("</", "<\\/")
-    parts = [coef_card(d), calc_card(), grid_card(), floor_card(d), promo_card(d), ledger_card(d), open_card(d)]
+    parts = [audit_card(d), coef_card(d), calc_card(), grid_card(), floor_card(d), promo_card(d), ledger_card(d), open_card(d)]
     title = esc(p.get("name") or "숙소")
     return f"""<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{title} 부킹 콘솔</title><style>{CSS}</style></head><body><div class="wrap">
@@ -228,6 +251,11 @@ def check(d):
     for r in d.get("rooms") or []:
         if not isinstance(r.get("base"), int) or r["base"] < 1:
             errors.append(f'{r.get("name")}: 기준 인원 base 가 없다.')
+    for a in d.get("audit") or []:
+        if a.get("status") not in AUDIT:
+            errors.append(f'점검 {a.get("item")}: status 는 {"·".join(AUDIT)} 중 하나다.')
+        elif a["status"] in ("bad", "warn"):
+            warns.append(f'점검 {"위험" if a["status"] == "bad" else "주의"}: {a.get("area")} · {a.get("item")} = {a.get("value")}')
     if errors:
         return errors, warns
     # 어기면 비회원이 회원보다 싸지거나 사전예약이 평시보다 비싸진다
