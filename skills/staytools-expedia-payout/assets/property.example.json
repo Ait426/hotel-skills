@@ -1,5 +1,5 @@
 {
- "_note": "익스피디아 조사 결과 → HTML 콘솔 입력 파일. 빈 양식이다. 그 숙소의 값으로 채우고, 모르는 값은 null 로 둔 뒤 open[] 에 확인 방법을 적어라.\ncoef.T 는 자료에 없으면 1.1 을 넣고 verified.T 를 false 로 둔다. c·a 는 예약 결제 내역에서 읽는다. p 를 모르면 null 이고 패키지 경로 계산이 꺼진다.\npromotions[].scope: pos=자국 POS 전용, base=조건 없는 받침대, member=별도 회원 프로모션(2층), package=패키지 경로 전용, mobile=모바일 전용(기기를 알 수 없어 계산 제외).\npromotions[].cond: sameDay=당일, advance=최소 minDays 일 전. memberPct 는 화면에 보이는 회원 합계 %이고 있으면 이 값을 그대로 쓴다.\npromotions[].status 가 '적용' 인 것만 계산한다. 캠페인도 1층 프로모션 한 줄로 넣고 period 에 예약·숙박 기간을 적는다. 활성이어도 고객페이지에 반영되지 않으면 status 를 '미반영' 으로 두고 open[] 에 남긴다.\nledger[].nights 는 박수다. 금액이 박별 반올림으로 합산되므로 허용 오차가 박수만큼 커진다.\ntargets[].to 가 null 이면 그 일수 이상 전부다. 목표는 자국 POS 회원 기준으로 비교한다. 없으면 빈 배열로 둔다. 지어내지 마라.\nledger 는 예약 결제 내역에서 읽은 실측값만 넣는다. 예약번호·투숙객 이름·연락처는 어디에도 적지 마라.\naudit[] 는 숙소 점검 결과다(references/audit.md). area 영역, item 항목, value 화면 값, status 는 ok·warn·bad·unknown, rule 은 화면에 적힌 기준, action 조치, source 읽은 화면. 담당자 이메일은 적지 마라.\nsummary[]·findings[]·programs[]·content·ratePlans[]·measurements[] 는 아고다 스킬과 같은 기록 칸이다. 쓰는 법은 references/audit.md 「아고다 스킬과 같은 산출물」. 모르는 값은 null, 확인 방법은 open[].",
+ "_note": "익스피디아 조사 결과 → HTML 콘솔 입력 파일. 빈 양식이다. 그 숙소의 값으로 채우고, 모르는 값은 null 로 둔 뒤 open[] 에 확인 방법을 적어라.\ncoef.T 는 자료에 없으면 1.1 을 넣고 verified.T 를 false 로 둔다. c·a 는 예약 결제 내역에서 읽는다. p 를 모르면 null 이고 패키지 경로 계산이 꺼진다.\npromotions[].scope: pos=자국 POS 전용, base=조건 없는 받침대, member=별도 회원 프로모션(2층), package=패키지 경로 전용, mobile=모바일 전용(기기를 알 수 없어 계산 제외).\npromotions[].cond: sameDay=당일, advance=최소 minDays 일 전. memberPct 는 화면에 보이는 회원 합계 %이고 있으면 이 값을 그대로 쓴다.\npromotions[].status 가 '적용' 인 것만 계산한다. 캠페인도 1층 프로모션 한 줄로 넣고 period 에 예약·숙박 기간을 적는다. 활성이어도 고객페이지에 반영되지 않으면 status 를 '미반영' 으로 두고 open[] 에 남긴다.\nledger[].nights 는 박수다. 금액이 박별 반올림으로 합산되므로 허용 오차가 박수만큼 커진다.\ntargets[].to 가 null 이면 그 일수 이상 전부다. 목표는 자국 POS 회원 기준으로 비교한다. 없으면 빈 배열로 둔다. 지어내지 마라.\nledger 는 예약 결제 내역에서 읽은 실측값만 넣는다. 예약번호·투숙객 이름·연락처는 어디에도 적지 마라.\naudit[] 는 숙소 점검 결과다(references/audit.md). area 영역, item 항목, value 화면 값, status 는 ok·warn·bad·unknown, rule 은 화면에 적힌 기준, action 조치, source 읽은 화면. 담당자 이메일은 적지 마라.\nsummary[]·findings[]·programs[]·content·ratePlans[]·measurements[] 는 아고다 스킬과 같은 기록 칸이다. 쓰는 법은 references/audit.md 「아고다 스킬과 같은 산출물」. 모르는 값은 null, 확인 방법은 open[].\npromoGroups[] 는 중복 규칙을 계산기에 넣는 칸이다. mode: locked(항상 적용)·single(그룹에서 하나만)·multi(누적). commissionParts[] 는 수수료 항목이고 kind: base(결제액 차감)·accel(세전 차감), options 에 화면 선택지를 넣으면 조합을 비교한다. pct 를 모르면 null 대신 그 항목을 뺀다.",
  "property": {
   "name": "",
   "expediaId": "",
@@ -131,5 +131,13 @@
   }
  ],
  "measurements": [],
+ "promoGroups": [
+  {
+   "name": "",
+   "mode": "single",
+   "items": []
+  }
+ ],
+ "commissionParts": [],
  "open": []
 }

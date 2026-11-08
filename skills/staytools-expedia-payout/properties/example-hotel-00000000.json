@@ -287,6 +287,72 @@
    "shown": 208000
   }
  ],
+ "promoGroups": [
+  {
+   "name": "1층 프로모션",
+   "mode": "single",
+   "items": [
+    {
+     "name": "KR Same-day",
+     "pct": 20,
+     "on": false
+    },
+    {
+     "name": "KR Advance 3days",
+     "pct": 23,
+     "on": true
+    },
+    {
+     "name": "KR Early Bird 10days",
+     "pct": 27,
+     "on": false
+    },
+    {
+     "name": "SD - Same-day",
+     "pct": 5,
+     "on": false
+    },
+    {
+     "name": "ADV3 - Advance 3days",
+     "pct": 8,
+     "on": false
+    },
+    {
+     "name": "EB10 - Early Bird 10days",
+     "pct": 12,
+     "on": false
+    }
+   ]
+  },
+  {
+   "name": "2층 회원 가산",
+   "mode": "single",
+   "items": [
+    {
+     "name": "회원 가산",
+     "pct": 10,
+     "on": true
+    }
+   ]
+  }
+ ],
+ "commissionParts": [
+  {
+   "name": "기본 보수 c",
+   "kind": "base",
+   "pct": 15
+  },
+  {
+   "name": "엑셀러레이터 a",
+   "kind": "accel",
+   "pct": 5,
+   "options": [
+    0,
+    5,
+    10
+   ]
+  }
+ ],
  "open": [
   {
    "item": "패키지 배수 p 의 금·토 값",

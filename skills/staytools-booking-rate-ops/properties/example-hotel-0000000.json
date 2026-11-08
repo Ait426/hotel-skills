@@ -268,6 +268,85 @@
    "shown": 208000
   }
  ],
+ "promoGroups": [
+  {
+   "name": "타겟 요금",
+   "mode": "single",
+   "items": [
+    {
+     "name": "Domestic country rate",
+     "pct": 25,
+     "on": true
+    },
+    {
+     "name": "International country rate",
+     "pct": 15,
+     "on": false
+    },
+    {
+     "name": "Mobile rate",
+     "pct": 10,
+     "on": false
+    }
+   ]
+  },
+  {
+   "name": "포트폴리오 · 캠페인 (큰 쪽 하나)",
+   "mode": "single",
+   "items": [
+    {
+     "name": "Basic Deal",
+     "pct": 15,
+     "on": true
+    },
+    {
+     "name": "Basic Deal Secret",
+     "pct": 17,
+     "on": false
+    },
+    {
+     "name": "Early Booker Deal",
+     "pct": 18,
+     "on": false
+    },
+    {
+     "name": "Early Booker Secret",
+     "pct": 20,
+     "on": false
+    },
+    {
+     "name": "Last Minute Deal",
+     "pct": 16,
+     "on": false
+    },
+    {
+     "name": "가을 캠페인",
+     "pct": 30,
+     "on": false
+    }
+   ]
+  }
+ ],
+ "commissionParts": [
+  {
+   "name": "기본 수수료",
+   "kind": "base",
+   "pct": 15,
+   "options": [
+    15
+   ]
+  },
+  {
+   "name": "노출 향상 도구",
+   "kind": "base",
+   "pct": 3,
+   "options": [
+    0,
+    3,
+    5
+   ]
+  }
+ ],
  "open": [
   {
    "item": "모바일 요금의 숙소별 최소 할인율",

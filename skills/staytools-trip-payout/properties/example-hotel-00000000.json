@@ -303,6 +303,52 @@
    "shown": 208000
   }
  ],
+ "promoGroups": [
+  {
+   "name": "주 프로모션 (겹치지 않는 것 중 하나)",
+   "mode": "single",
+   "items": [
+    {
+     "name": "샘플 Country Banner",
+     "pct": 50,
+     "on": true
+    },
+    {
+     "name": "샘플 Package",
+     "pct": 45,
+     "on": false
+    },
+    {
+     "name": "샘플 XPOS",
+     "pct": 30,
+     "on": false
+    },
+    {
+     "name": "샘플 연박 혜택",
+     "pct": 40,
+     "on": false
+    }
+   ]
+  },
+  {
+   "name": "회원 할인",
+   "mode": "multi",
+   "items": [
+    {
+     "name": "회원 할인 m",
+     "pct": 10,
+     "on": false
+    }
+   ]
+  }
+ ],
+ "commissionParts": [
+  {
+   "name": "수수료 c",
+   "kind": "base",
+   "pct": 15
+  }
+ ],
  "open": [
   {
    "item": "캠페인 + 회원 중복",
