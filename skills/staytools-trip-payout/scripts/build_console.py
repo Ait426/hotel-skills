@@ -282,14 +282,18 @@ def content_card(d):
 
 
 def plans_card(d):
-    """요금제 인벤토리. 가격(plans·rates)과 다른 것이다."""
+    """요금제 인벤토리. 가격(plans·rates)과 다른 것이다. 화면이 주는 취소율·순매출이 있으면 칸을 더한다."""
+    rp = d.get("ratePlans") or []
+    extra = [k for k, _ in (("cancelRate", "취소율"), ("revenue", "순매출")) if any(x.get(k) is not None for x in rp)]
+    names = {"cancelRate": "취소율", "revenue": "순매출"}
     rows = [f'<tr><td class="l">{esc(x.get("name"))}</td><td>{dash(x.get("id"))}</td><td>{dash(x.get("rooms"))}</td>'
             f'<td class="l">{dash(x.get("base"))}</td><td class="l">{dash(x.get("policy"))}</td><td>{dash(x.get("sold"))}</td>'
-            f'<td><span class="tag {"ok" if x.get("status") in ("적용 중", "활성", "판매 중") else ""}">{dash(x.get("status"))}</span></td></tr>'
-            for x in d.get("ratePlans") or []]
-    return card("요금제", f'<div class="body">{table(["요금제", "ID", "객실 수", "기준 요금제", "취소 정책", "예약 수", "상태"], rows)}'
-                '<p class="note">예약 0건인 요금제는 노출가가 잘못됐거나 둘 이유가 없는 것이다. 끄기 전에 남은 요금제가 모든 객실을 덮는지 본다.</p></div>') if rows else ""
-
+            + "".join(f'<td>{dash(x.get(k))}</td>' for k in extra)
+            + f'<td><span class="tag {"ok" if x.get("status") in ("적용 중", "활성", "판매 중") else ""}">{dash(x.get("status"))}</span></td></tr>'
+            for x in rp]
+    note = "".join(f'<p class="note">{esc(x["name"])}: {esc(x["note"])}</p>' for x in rp if x.get("note"))
+    return card("요금제", f'<div class="body">{table(["요금제", "ID", "객실 수", "기준 요금제", "취소 정책", "예약 수"] + [names[k] for k in extra] + ["상태"], rows)}{note}'
+                '<p class="note">예약 0건인 요금제는 노출가가 잘못됐거나 둘 이유가 없는 것이다. 끄기 전에 남은 요금제가 모든 객실을 덮는지 본다. 취소율이 유독 높은 요금제는 정책·노출 경로를 본다.</p></div>') if rows else ""
 
 def measure_points(d):
     """노출가 실측. ratio = 화면값 ÷ 입력값. 3점 이상이면 비율이 서로 맞는지(선형) 본다."""
@@ -374,59 +378,103 @@ def paged(pages):
 
 
 # ── 조합 비교 — 아고다 계산기와 같은 기능 ──
-# 중복 규칙 강제(promoGroups) · 수수료 조합(commissionParts) · 두 방향(목표→요금, 요금→입금가) · 목표 칩 ·
-# 실측 비율 고정 토글(measurements) · 요일별 일괄 표(rooms[].rates) · 금액 분해 막대.
-# promoGroups[].mode: locked(항상 적용) · single(그룹에서 하나만, 라디오) · multi(누적, 체크박스)
-# commissionParts[].kind: base(결제액에서 % 차감) · accel(세전 금액에서 % 차감). options 가 있으면 선택지로 비교한다.
+# 중복 규칙 강제(promoGroups) · 항목별 할인율 직접 수정 · 수수료 조합(commissionParts: 선택지 · 범위 슬라이더 · 켜기/끄기) ·
+# 두 방향(목표→요금, 요금→입금가) · 목표 칩/요금 칩 · 올림 단위 전환 · 금액 단계 분해(입금계수) · 분해 막대 ·
+# 실측 비율 고정 토글과 점별 이론·실측 대조 · 요일별 일괄 표(하한 판정) · 하한 부족액과 필요 요금.
+# promoGroups[].mode: locked(항상 적용) · single(그룹에서 하나만, 라디오) · multi(누적, 체크박스). rule 은 그룹 설명.
+# commissionParts[].kind: base(결제액에서 % 차감) · accel(세전 금액에서 % 차감).
+#   options:[…] 이면 선택지, range:[최소, 최대, 간격] 이면 슬라이더와 켜기/끄기, 둘 다 없으면 고정값.
 MODES = ("locked", "single", "multi")
 COMBO_JS = r"""document.addEventListener('DOMContentLoaded',function(){var el=document.getElementById('combo');if(!el)return;
-var D=JSON.parse(document.getElementById('data').textContent),G=D.promoGroups||[],P=D.commissionParts||[],X=COMBO,mode='fwd';
+var D=JSON.parse(document.getElementById('data').textContent),G=D.promoGroups||[],P=(D.commissionParts||[]).map(function(p){return{name:p.name,kind:p.kind,pct:+p.pct||0,options:p.options,range:p.range,note:p.note,on:p.on!==false}}),X=COMBO,mode='fwd';
 var q=function(s){return el.querySelector(s)},won=function(x){return x==null||!isFinite(x)?'—':Math.round(x).toLocaleString('ko-KR')};
-var unit=X.unit||100,ceilU=function(x){return Math.ceil(+x.toFixed(6)/unit)*unit};
+var unit=X.unit||100,ceilU=function(x){return Math.ceil(+x.toFixed(6)/unit)*unit},T=X.T||1;
+var S=G.map(function(g){return(g.items||[]).map(function(it){return{pct:+it.pct||0,on:g.mode==='locked'||!!it.on}})});
 function esc(s){var e=document.createElement('i');e.textContent=s==null?'':String(s);return e.innerHTML}
-q('#cg').innerHTML=G.map(function(g,gi){return '<fieldset class="cgrp"><legend>'+esc(g.name)+' <small>'+({locked:'항상 적용',single:'하나만',multi:'누적'})[g.mode]+'</small></legend>'+
- (g.items||[]).map(function(it,ii){var t=g.mode==='single'?'radio':'checkbox';
- return '<label class="copt"><input type="'+t+'" name="g'+gi+'" data-g="'+gi+'" data-i="'+ii+'"'+(it.on||g.mode==='locked'?' checked':'')+(g.mode==='locked'?' disabled':'')+'> '+esc(it.name)+' <b>'+it.pct+'%</b>'+(it.tag?' <small>'+esc(it.tag)+'</small>':'')+'</label>'}).join('')+
- (g.mode==='single'?'<label class="copt"><input type="radio" name="g'+gi+'" data-g="'+gi+'" data-i="-1"'+((g.items||[]).some(function(i){return i.on})?'':' checked')+'> 없음</label>':'')+'</fieldset>'}).join('');
-q('#cp').innerHTML=P.map(function(p,pi){var o=(p.options&&p.options.length?p.options:[p.pct]);
- return '<label class="field">'+esc(p.name)+' ('+(p.kind==='accel'?'세전 차감':'결제액 차감')+')<select data-p="'+pi+'">'+o.map(function(v){return '<option value="'+v+'"'+(v===p.pct?' selected':'')+'>'+v+'%</option>'}).join('')+'</select></label>'}).join('');
-q('#cchips').innerHTML=(X.targets||[]).map(function(t){return '<button type="button" class="pgtab" data-t="'+t.v+'">'+esc(t.label)+' '+won(t.v)+'</button>'}).join('');
-if(!X.meas)q('#cmeasw').hidden=true;
-function disc(){if(q('#cmeas').checked&&X.meas)return 1-X.meas;var ds=[];
- G.forEach(function(g,gi){var s=0;el.querySelectorAll('input[data-g="'+gi+'"]').forEach(function(c){var i=+c.dataset.i;if(c.checked&&i>=0)s+=g.items[i].pct});if(s)ds.push(s)});
- return X.across==='mult'?1-ds.reduce(function(a,x){return a*(1-x/100)},1):ds.reduce(function(a,x){return a+x},0)/100}
-function comm(){var b=0,a=0;el.querySelectorAll('select[data-p]').forEach(function(s){var p=P[+s.dataset.p];if(p.kind==='accel')a+=+s.value;else b+=+s.value});return{b:b,a:a}}
-function factor(d,c){return(1-d)*((1-c.b/100)-c.a/100/(X.T||1))}
-function verdict(pay,goal){var fl=goal!=null?goal:X.floor;return fl==null?'<span class="tag">하한·목표 미지정</span>':pay>=fl?'<span class="tag ok">'+won(fl)+' 대비 +'+won(pay-fl)+'</span>':'<span class="tag bad">'+won(fl)+' 대비 -'+won(fl-pay)+'</span>'}
-function run(){var d=disc(),c=comm(),f=factor(d,c),rate,pay,goal=null;
- if(mode==='rev'){goal=+q('#ctgt').value||0;rate=f>0?ceilU(goal/f):NaN;pay=rate*f;q('#ccap').textContent='필요 요금 ('+won(unit)+'원 올림)';q('#cfig').textContent=won(rate)}
- else{rate=+q('#crate').value||0;pay=rate*f;q('#ccap').textContent='입금가 (계산값)';q('#cfig').textContent=won(pay)}
- var paid=rate*(1-d),cut=rate-pay-(rate-paid);
- q('#cline').innerHTML='총 할인 '+(d*100).toFixed(1)+'%'+(q('#cmeas').checked&&X.meas?' (실측 고정)':'')+' · 손님 결제 '+won(paid)+' · 입금 '+won(pay)+' · 수수료 '+c.b+'%'+(c.a?' + '+c.a+'%':'')+' · '+verdict(pay,goal);
+function gsum(gi){var g=G[gi],s=0;S[gi].forEach(function(x){if(x.on)s+=x.pct});return g.mode==='single'?(S[gi].filter(function(x){return x.on})[0]||{pct:0}).pct:s}
+function drawGroups(){q('#cg').innerHTML=G.map(function(g,gi){var t=g.mode==='single'?'radio':'checkbox',sum=gsum(gi);
+ return '<fieldset class="cgrp"><legend>'+esc(g.name)+' <small>'+({locked:'항상 적용',single:'하나만',multi:'누적'})[g.mode]+'</small> <b class="gsum">+'+sum+'%</b></legend>'+(g.rule?'<p class="note">'+esc(g.rule)+'</p>':'')+
+ (g.items||[]).map(function(it,ii){var st=S[gi][ii];
+  return '<label class="copt'+(st.on&&st.pct?' on':'')+'"><input type="'+t+'" name="g'+gi+'" data-g="'+gi+'" data-i="'+ii+'"'+(st.on?' checked':'')+(g.mode==='locked'?' disabled':'')+'> '+esc(it.name)+(it.tag?' <small>'+esc(it.tag)+'</small>':'')+
+  ' <input class="cpct" type="number" min="0" max="99" step="1" data-g="'+gi+'" data-pi="'+ii+'" value="'+st.pct+'" aria-label="'+esc(it.name)+' 할인율">%</label>'}).join('')+
+ (g.mode==='single'?'<label class="copt"><input type="radio" name="g'+gi+'" data-g="'+gi+'" data-i="-1"'+(S[gi].some(function(x){return x.on})?'':' checked')+'> 없음</label>':'')+'</fieldset>'}).join('')}
+function drawComm(){q('#cp').innerHTML=P.map(function(p,pi){var lab=esc(p.name)+' <small>('+(p.kind==='accel'?'세전 차감':'결제액 차감')+(p.note?' · '+esc(p.note):'')+')</small>',ctl;
+ if(p.options&&p.options.length)ctl='<select data-p="'+pi+'">'+p.options.map(function(v){return '<option value="'+v+'"'+(+v===p.pct?' selected':'')+'>'+v+'%</option>'}).join('')+'</select>';
+ else if(p.range)ctl='<input type="checkbox" data-pon="'+pi+'"'+(p.on?' checked':'')+'> <input type="range" data-pr="'+pi+'" min="'+p.range[0]+'" max="'+p.range[1]+'" step="'+(p.range[2]||1)+'" value="'+p.pct+'"'+(p.on?'':' disabled')+'>';
+ else ctl='';return '<div class="crow"><span>'+lab+'</span>'+ctl+'<b class="mono">'+(p.on?p.pct+'%':'—')+'</b></div>'}).join('')}
+var tsum=function(){var a=[];G.forEach(function(g,gi){var s=gsum(gi);if(s)a.push(s)});return a};
+function theory(){var ds=tsum();return X.across==='mult'?1-ds.reduce(function(a,x){return a*(1-x/100)},1):ds.reduce(function(a,x){return a+x},0)/100}
+function disc(){return q('#cmeas').checked&&X.meas?1-X.meas:theory()}
+function comm(){var b=0,a=0;P.forEach(function(p){if(!p.on)return;if(p.kind==='accel')a+=p.pct;else b+=p.pct});return{b:b,a:a}}
+function factor(d,c){return(1-d)*((1-c.b/100)-c.a/100/T)}
+function verdict(pay,goal){var fl=goal!=null?goal:X.floor;if(fl==null)return '<span class="tag">하한·목표 미지정</span>';
+ if(pay<fl)return '<span class="tag bad">'+(goal!=null?'목표':'하한')+' 미달 −'+won(fl-pay)+'</span>';
+ if(goal==null&&pay<fl*1.05)return '<span class="tag warn">턱걸이 +'+won(pay-fl)+'</span>';return '<span class="tag ok">OK +'+won(pay-fl)+'</span>'}
+function chips(){var list=mode==='rev'?(X.targets||[]).map(function(t){return[t.label+' '+won(t.v),t.v]}):(X.presets||[]).map(function(v){return[won(v),v]});
+ q('#cchips').innerHTML=list.map(function(p){return '<button type="button" class="pgtab" data-t="'+p[1]+'">'+esc(p[0])+'</button>'}).join('')+
+ '<button type="button" class="pgtab" id="cround" style="margin-left:auto">올림 '+won(unit)+'원</button>'}
+function run(){var d=disc(),c=comm(),f=factor(d,c),rate,pay,goal=null,note='';drawGroups();drawComm();
+ q('#csig').textContent='할인 '+(theory()*100).toFixed(1)+'%'+(q('#cmeas').checked&&X.meas?' · 실측 '+(d*100).toFixed(2)+'% 사용':'');
+ q('#ccom').textContent='수수료 '+c.b+'%'+(c.a?' + '+c.a+'%':'');
+ if(f<=0){q('#cfig').textContent='계산 불가';q('#cline').textContent='할인과 수수료 합이 100%를 넘는다.';q('#cchain').innerHTML='';return}
+ if(mode==='rev'){goal=+q('#ctgt').value||0;rate=ceilU(goal/f);pay=rate*f;q('#ccap').textContent='필요 요금 ('+won(unit)+'원 올림)';q('#cfig').textContent=won(rate);
+  note='실제 입금 '+won(pay)+'원 (목표 +'+won(pay-goal)+')'+(X.floor!=null&&goal<X.floor?' · 목표가 하한 '+won(X.floor)+'원보다 낮다':'')}
+ else{rate=+q('#crate').value||0;pay=rate*f;q('#ccap').textContent='입금가 (계산값)';q('#cfig').textContent=won(pay);
+  if(X.floor!=null)note=pay<X.floor?'하한 '+won(X.floor)+'원에서 '+won(X.floor-pay)+'원 부족 · 요금 '+won(ceilU(X.floor/f))+'원 필요':'하한 '+won(X.floor)+'원 대비 '+won(pay-X.floor)+'원 여유'}
+ var paid=rate*(1-d),cut=paid-pay;
+ q('#cline').innerHTML=note+' '+verdict(pay,goal);
+ var steps=[['입력 요금','달력·판매가',won(rate),1],['할인 −'+(d*100).toFixed(1)+'%',X.across==='mult'?'그룹끼리 곱해서':'그룹끼리 더해서','−'+won(rate-paid)],['손님 결제','표시가',won(paid)]];
+ if(T>1)steps.push(['세전 금액','손님 결제 ÷ '+T,won(paid/T)]);
+ steps.push(['수수료 −'+c.b+'%'+(c.a?' · −'+c.a+'%':''),P.filter(function(p){return p.on}).map(function(p){return p.name}).join(' + '),'−'+won(cut)],['입금가','실제로 들어오는 돈',won(pay),1],['입금계수','입금가 ÷ 입력 요금',f.toFixed(4)]);
+ q('#cchain').innerHTML=steps.map(function(s){return '<div class="cstep'+(s[3]?' hi':'')+'"><span>'+esc(s[0])+'<em>'+esc(s[1])+'</em></span><b class="mono">'+s[2]+'</b></div>'}).join('');
  var tot=rate>0?rate:1,w=function(x){return Math.max(0,x/tot*100).toFixed(1)+'%'};
  q('#cbar').innerHTML='<span style="width:'+w(rate-paid)+';background:var(--accent-soft)" title="할인"></span><span style="width:'+w(cut)+';background:var(--bad-soft)" title="수수료"></span><span style="width:'+w(pay)+';background:var(--ok-soft)" title="입금"></span>';
- q('#clegend').textContent='할인 '+won(rate-paid)+' · 수수료 '+won(cut)+' · 입금 '+won(pay);
- var rows=[],tg=mode==='rev'?goal:null;(D.rooms||[]).forEach(function(r){Object.keys(r.rates||{}).forEach(function(k){var v=r.rates[k];if(typeof v!=='number')return;var p=v*f;
-  rows.push('<tr><td class="l">'+esc(r.name)+'</td><td>'+esc(k)+'</td><td>'+won(v)+'</td><td><b>'+won(p)+'</b></td><td>'+(tg?won(ceilU(tg/f)):'—')+'</td><td>'+verdict(p,tg)+'</td></tr>')})});
- q('#cweek').innerHTML=rows.join('');q('#cweekw').hidden=!rows.length}
-q('#cfwd').onclick=function(){mode='fwd';this.setAttribute('aria-pressed','true');q('#crev').setAttribute('aria-pressed','false');q('#cratew').hidden=false;q('#ctgtw').hidden=true;run()};
-q('#crev').onclick=function(){mode='rev';this.setAttribute('aria-pressed','true');q('#cfwd').setAttribute('aria-pressed','false');q('#cratew').hidden=true;q('#ctgtw').hidden=false;run()};
-q('#cchips').onclick=function(e){var t=e.target.closest('[data-t]');if(!t)return;q('#ctgt').value=t.dataset.t;q('#crev').onclick.call(q('#crev'))};
-el.addEventListener('input',run);el.addEventListener('change',run);run()});"""
+ q('#clegend').textContent='할인 '+(100*(rate-paid)/tot).toFixed(1)+'% · 수수료 '+(100*cut/tot).toFixed(1)+'% · 입금 '+(100*pay/tot).toFixed(1)+'%';
+ var th=theory();q('#cmeasb').innerHTML=(X.points||[]).map(function(m){var calc=m.input*(1-th),gap=m.shown-calc;
+  return '<tr><td class="l">'+esc(m.label)+'</td><td>'+won(m.input)+'</td><td>'+won(calc)+'</td><td>'+won(m.shown)+'</td><td><span class="tag '+(Math.abs(gap)<=m.shown*0.005?'ok':'warn')+'">'+(gap>=0?'+':'')+won(gap)+'</span></td></tr>'}).join('');
+ var rows=[],tg=mode==='rev'?goal:null;(D.rooms||[]).forEach(function(r){Object.keys(r.rates||{}).forEach(function(k){var v=r.rates[k];if(typeof v!=='number')return;var p=v*f,need=tg?ceilU(tg/f):(X.floor!=null?ceilU(X.floor/f):null);
+  rows.push('<tr><td class="l">'+esc(r.name)+'</td><td>'+esc(k)+'</td><td>'+won(v)+'</td><td><b>'+won(p)+'</b></td><td>'+(need==null?'—':won(need))+'</td><td>'+(need==null?'—':(need-v>0?'+':'')+won(need-v))+'</td><td>'+verdict(p,tg)+'</td></tr>')})});
+ q('#cweek').innerHTML=rows.join('');q('#cweekw').hidden=!rows.length;q('#cweekt').textContent='입금계수 '+f.toFixed(4)}
+function setMode(m){mode=m;q('#cfwd').setAttribute('aria-pressed',String(m==='fwd'));q('#crev').setAttribute('aria-pressed',String(m==='rev'));q('#cratew').hidden=m!=='fwd';q('#ctgtw').hidden=m!=='rev';chips();run()}
+q('#cfwd').onclick=function(){setMode('fwd')};q('#crev').onclick=function(){setMode('rev')};
+q('#cchips').onclick=function(e){if(e.target.id==='cround'){unit=unit===100?1000:unit===1000?5000:100;chips();run();return}var t=e.target.closest('[data-t]');if(!t)return;q(mode==='rev'?'#ctgt':'#crate').value=t.dataset.t;run()};
+el.addEventListener('change',function(e){var t=e.target,gi=t.dataset.g;
+ if(t.dataset.i!=null){var g=G[+gi],i=+t.dataset.i;if(g.mode==='single')S[+gi].forEach(function(x,k){x.on=k===i});else if(g.mode==='multi')S[+gi][i].on=t.checked}
+ else if(t.dataset.p!=null)P[+t.dataset.p].pct=+t.value;else if(t.dataset.pon!=null)P[+t.dataset.pon].on=t.checked;run()});
+el.addEventListener('input',function(e){var t=e.target;
+ if(t.dataset.pi!=null){S[+t.dataset.g][+t.dataset.pi].pct=Math.max(0,Math.min(99,+t.value||0));var s=t.selectionStart;run();var n=el.querySelector('input[data-g="'+t.dataset.g+'"][data-pi="'+t.dataset.pi+'"]');if(n){n.focus();try{n.setSelectionRange(s,s)}catch(err){console.warn('[combo] 커서 위치 복원 실패',err)}}return}
+ if(t.dataset.pr!=null){P[+t.dataset.pr].pct=+t.value;run();return}
+ if(t.id==='crate'||t.id==='ctgt'||t.id==='cmeas')run()});
+setMode('fwd')});"""
 CSS += """.cgrp{border:1px solid var(--line);border-radius:7px;margin:0 0 10px;padding:8px 12px}.cgrp legend{font-weight:700;font-size:13px}
-.copt{display:block;padding:3px 0;font-size:14px}.copt input{margin-right:6px}
+.cgrp .gsum{font-variant-numeric:tabular-nums;color:var(--accent);margin-left:6px}
+.copt{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:3px 0;font-size:14px}.copt.on{font-weight:700}
+.cpct{width:58px;margin-left:auto;font:inherit;font-size:13px;padding:2px 4px;border:1px solid var(--line);border-radius:5px;background:var(--surface);color:var(--text)}
+.crow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:5px 0;font-size:14px}.crow>span{flex:1 1 160px}.crow input[type=range]{flex:1 1 120px}
 .cbar{display:flex;height:12px;border-radius:6px;overflow:hidden;background:var(--sunk);margin:10px 0 4px}.cbar span{display:block;height:100%}
+.cstep{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--line);font-size:14px}
+.cstep em{display:block;font-style:normal;font-size:11px;color:var(--dim)}.cstep.hi b{color:var(--accent);font-size:16px}
+.mono{font-variant-numeric:tabular-nums}
 """
 
 
 def combo_targets(d):
-    """목표 칩. targets[].payout(또는 v) · property.targets[].v · cmsPresets 를 모은다. null 은 뺀다."""
+    """목표 칩. targets[].payout(또는 v) · property.targets[].v 를 모은다. null 은 뺀다."""
     out = []
     for t in (d.get("targets") or []) + ((d.get("property") or {}).get("targets") or []):
         v = t.get("payout", t.get("v"))
         if isinstance(v, (int, float)):
             out.append({"label": " ".join(str(x) for x in (t.get("room"), t.get("set"), t.get("label")) if x) or "목표", "v": v})
     return out
+
+
+def combo_presets(d):
+    """요금 칩. property.ratePresets 가 있으면 그것, 없으면 rooms[].rates 의 서로 다른 값."""
+    pre = (d.get("property") or {}).get("ratePresets")
+    if pre:
+        return [v for v in pre if isinstance(v, (int, float))]
+    vals = {v for r in d.get("rooms") or [] for v in (r.get("rates") or {}).values() if isinstance(v, (int, float))}
+    return sorted(vals)[:8]
 
 
 def measured_ratio(d):
@@ -439,28 +487,37 @@ def combo_card(d, across, T=1, floor=None, rate=None):
     if not d.get("promoGroups") and not d.get("commissionParts"):
         return ""
     unit = (d.get("property") or {}).get("roundUnit") or 100
+    points = [{"label": m.get("label"), "input": m["input"], "shown": m["shown"]}
+              for m, r in measure_points(d) if r is not None]
     cfg = json.dumps({"across": across, "T": T, "floor": floor, "unit": unit, "targets": combo_targets(d),
-                      "meas": measured_ratio(d)}, ensure_ascii=False)
+                      "presets": combo_presets(d), "meas": measured_ratio(d), "points": points}, ensure_ascii=False)
+    meas = ('<div id="cmeasw"><h3 style="font-size:13px;color:var(--dim)">실측 대조 (위 조합의 이론값 vs 고객 페이지)</h3>'
+            '<label class="copt"><input type="checkbox" id="cmeas"> 할인을 실측 평균으로 고정 '
+            f'<small>({(1 - measured_ratio(d)) * 100:.2f}%) 켜면 위에서 고른 프로모션 대신 실제로 관측된 할인율을 쓴다</small></label>'
+            '<div class="scroll"><table><thead><tr><th>측정</th><th>입력값</th><th>이론 화면값</th><th>실측 화면값</th><th>차이</th></tr></thead>'
+            '<tbody id="cmeasb"></tbody></table></div></div>') if points else '<input type="checkbox" id="cmeas" hidden>'
     body = ('<div class="pgnav"><button type="button" class="pgtab" id="cfwd" aria-pressed="true">요금 → 입금가</button>'
             '<button type="button" class="pgtab" id="crev" aria-pressed="false">목표 입금가 → 요금</button></div>'
             '<div class="cols"><div>'
             f'<label class="field" id="cratew">입력 요금 (달력·판매가)<input id="crate" type="number" min="0" step="100" value="{rate or 0}"></label>'
-            '<label class="field" id="ctgtw" hidden>목표 입금가<input id="ctgt" type="number" min="0" step="100" value="0"></label>'
+            f'<label class="field" id="ctgtw" hidden>목표 입금가<input id="ctgt" type="number" min="0" step="100" value="{(combo_targets(d) or [{"v": floor or 0}])[0]["v"]}"></label>'
             '<div class="pgnav" id="cchips"></div>'
-            '<label class="copt" id="cmeasw"><input type="checkbox" id="cmeas"> 실측 비율로 할인 고정 (노출가 실측 평균)</label>'
-            '<div id="cg"></div><div class="row2" id="cp"></div></div>'
+            '<p class="note"><b id="csig"></b></p><div id="cg"></div>'
+            '<p class="note"><b id="ccom"></b></p><div id="cp"></div></div>'
             '<div><small id="ccap">입금가 (계산값)</small><div class="fig" id="cfig">—</div><p class="note" id="cline"></p>'
-            '<div class="cbar" id="cbar"></div><p class="note" id="clegend"></p>'
-            f'<p class="note">그룹 안 「하나만」은 라디오라 두 개를 동시에 켤 수 없다. 그룹끼리는 {"곱해서" if across == "mult" else "더해서"} 합친다. 수수료 선택지를 바꿔 조합을 비교한다.</p></div></div>'
-            '<div id="cweekw"><h3 style="font-size:13px;color:var(--dim)">요일·요금세트별 일괄 (위 조합 기준)</h3>'
-            '<div class="scroll"><table><thead><tr><th>객실</th><th>세트</th><th>요금</th><th>입금가</th><th>목표용 요금</th><th>판정</th></tr></thead>'
+            '<div id="cchain"></div><div class="cbar" id="cbar"></div><p class="note" id="clegend"></p>'
+            f'<p class="note">그룹 안 「하나만」은 라디오라 두 개를 동시에 켤 수 없다. 그룹끼리는 {"곱해서" if across == "mult" else "더해서"} 합친다. '
+            '할인율 칸은 직접 고쳐 볼 수 있다(파일은 바뀌지 않는다). 수수료 선택지·슬라이더로 조합을 비교한다.</p></div></div>'
+            f'{meas}'
+            '<div id="cweekw"><h3 style="font-size:13px;color:var(--dim)">요일·요금세트별 일괄 (위 조합 기준) <span id="cweekt" class="mono"></span></h3>'
+            '<div class="scroll"><table><thead><tr><th>객실</th><th>세트</th><th>요금</th><th>입금가</th><th>목표·하한용 요금</th><th>차이</th><th>판정</th></tr></thead>'
             '<tbody id="cweek"></tbody></table></div></div>')
     return (f'<section class="card" id="combo"><h2>조합 비교 (중복 규칙 · 수수료 · 역산)</h2><div class="body">{body}</div></section>'
             f'<script>var COMBO={cfg};</script>')
 
 
 def channels_card(d):
-    """채널별 요금 비교. 같은 객실을 채널마다 얼마에 보내는지. 기준 채널 대비 비율을 붙인다."""
+    """채널별 요금 비교. 첫 세트 기준으로 정렬하고, 기준 채널 대비 비율에 색을 붙인다."""
     ch = d.get("channels") or []
     if not ch:
         return ""
@@ -469,16 +526,21 @@ def channels_card(d):
         for k in c.get("rates") or {}:
             if k not in sets:
                 sets.append(k)
+    first = sets[0] if sets else None
     base = next((c for c in ch if c.get("base")), ch[0])
-    bv = (base.get("rates") or {}).get(sets[0]) if sets else None
+    bv = (base.get("rates") or {}).get(first) if first else None
     rows = []
-    for c in ch:
-        v = (c.get("rates") or {}).get(sets[0]) if sets else None
-        ratio = f"{v / bv * 100:.0f}%" if v and bv else "—"
-        rows.append(f'<tr><td class="l">{esc(c.get("name"))}</td>' + "".join(f'<td>{dash((c.get("rates") or {}).get(s))}</td>' for s in sets)
-                    + f'<td>{ratio}</td></tr>')
+    for c in sorted(ch, key=lambda x: (x.get("rates") or {}).get(first) or 0):
+        v = (c.get("rates") or {}).get(first) if first else None
+        r = v / bv if v and bv else None
+        cls = "" if r is None else "bad" if r < .6 else "warn" if r < .85 else "ok"
+        st = c.get("status")
+        bdg = f' <span class="tag {"ok" if st == "live" else ""}">{"검증됨" if st == "live" else "예정"}</span>' if st else ""
+        cell = "—" if r is None else f'<span class="tag {cls}">{r * 100:.0f}%</span>'
+        rows.append(f'<tr><td class="l">{esc(c.get("name"))}{bdg}</td>' + "".join(f'<td>{dash((c.get("rates") or {}).get(s))}</td>' for s in sets)
+                    + f'<td>{cell}</td></tr>')
     return card("채널별 요금", f'<div class="body">{table(["채널"] + [esc(s) for s in sets] + [esc(base.get("name")) + " 대비"], rows)}'
-                '<p class="note">수수료 구조가 달라 차이는 정상이지만 폭은 알고 있어야 한다. 채널 매니저나 각 OTA 달력에서 읽은 값만 넣는다.</p></div>')
+                '<p class="note">수수료 구조가 달라 차이는 정상이지만 폭은 알고 있어야 한다. 60% 미만 빨강, 85% 미만 주황. 채널 매니저나 각 OTA 달력에서 읽은 값만 넣는다.</p></div>')
 
 
 def combo_script(d):
@@ -501,6 +563,74 @@ def combo_check(d, errors, warns):
             errors.append(f'수수료 항목 {p.get("name")}: kind 는 base·accel 중 하나다.')
         if p.get("options") and p.get("pct") not in p["options"]:
             warns.append(f'수수료 항목 {p.get("name")}: 현재 값 {p.get("pct")} 가 선택지에 없다.')
+        rg = p.get("range")
+        if rg is not None and not (isinstance(rg, list) and len(rg) >= 2 and all(isinstance(x, (int, float)) for x in rg) and rg[0] <= (p.get("pct") or 0) <= rg[1]):
+            errors.append(f'수수료 항목 {p.get("name")}: range 는 [최소, 최대, 간격] 이고 현재 pct 가 그 안에 있어야 한다.')
+
+
+def parity_check(d, errors, warns, across, T=1, floor=None):
+    """아고다 스킬 --check 와 같은 자체 점검: 미확인 전수 스캔 · 필수 영역 누락 · 결론 유무 · 실측 범위 · 최악 조합 하한."""
+    trail = json.dumps((d.get("findings") or []) + (d.get("open") or []), ensure_ascii=False)
+    unver = []
+
+    def walk(node, path):
+        if isinstance(node, dict):
+            if node.get("verified") is False:
+                unver.append((path, node.get("name") or node.get("key") or path))
+            for k, v in node.items():
+                walk(v, f"{path}.{k}" if path else k)
+        elif isinstance(node, list):
+            for i, v in enumerate(node):
+                walk(v, f"{path}[{i}]")
+
+    walk(d, "")
+    for path, name in unver:
+        # 이름 첫 낱말로 흔적을 찾는다. 흔한 낱말로 우연히 통과하지 않게 2자 이상만 본다.
+        head = str(name).split()[0] if str(name).split() else ""
+        if not (len(head) >= 2 and head in trail):
+            warns.append(f"{path} ({name}) 가 verified:false 인데 findings/open 어디에도 없다.")
+    # verified 가 { 칸: true/false } 묶음인 경우(coef.verified 등)도 본다
+    for sec in ("coef", "commission"):
+        vv = (d.get(sec) or {}).get("verified")
+        if isinstance(vv, dict):
+            for k, ok in vv.items():
+                if ok is False and k not in trail:
+                    warns.append(f"{sec}.{k} 가 미확인인데 findings/open 어디에도 없다.")
+    for key, label in (("rooms", "객실별 요금"), ("measurements", "노출가 실측"), ("programs", "프로그램"),
+                       ("content", "콘텐츠(사진·리뷰·매핑)"), ("ratePlans", "요금제"), ("findings", "발견 사항")):
+        if not d.get(key):
+            warns.append(f"{label}({key}) 가 비어 있다. 콘솔에서 그 카드가 빠지고 아고다 스킬 산출물과 달라진다.")
+    for m, r in measure_points(d):
+        if r is not None and not 0 < r <= 1.2:
+            errors.append(f'노출가 실측 {m.get("label")}: 화면값÷입력값 {r:.3f} 이 범위를 벗어났다. 입력값이나 화면값이 틀렸다.')
+    if floor is not None and d.get("promoGroups"):
+        ds = []
+        for g in d["promoGroups"]:
+            ps = [it.get("pct") or 0 for it in g.get("items") or [] if isinstance(it.get("pct"), (int, float))]
+            if ps:
+                ds.append(sum(ps) if g.get("mode") in ("multi", "locked") else max(ps))
+        keep = 1.0
+        for x in ds:
+            keep *= 1 - x / 100
+        worst = 1 - keep if across == "mult" else sum(ds) / 100
+        b = sum(p.get("pct") or 0 for p in d.get("commissionParts") or [] if p.get("kind") != "accel")
+        a = sum(p.get("pct") or 0 for p in d.get("commissionParts") or [] if p.get("kind") == "accel")
+        f = (1 - worst) * ((1 - b / 100) - a / 100 / (T or 1))
+        if f > 0:
+            warns.append(f"최악 조합(할인 {worst * 100:.1f}%)에서 하한 {floor:,.0f}원을 지키려면 요금 ≥ {floor / f:,.0f}원")
+            for r in d.get("rooms") or []:
+                for k, v in (r.get("rates") or {}).items():
+                    if isinstance(v, (int, float)) and v * f < floor:
+                        warns.append(f'{r.get("name")} {k} {v:,.0f}원은 최악 조합에서 입금 {v * f:,.0f}원 — 하한 미달')
+        else:
+            errors.append(f"최악 조합의 할인과 수수료 합이 100%를 넘는다 (할인 {worst * 100:.1f}%).")
+
+
+def artifact_fragment(html):
+    """claude.ai Artifact 에 붙일 조각. doctype·html·head·body 껍데기를 벗기고 title·style·본문만 남긴다."""
+    head = html[html.index("<title>"):html.index("</head>")]
+    body = html[html.index("<body>") + 6:html.rindex("</body>")]
+    return head + body
 
 
 def open_card(d):
@@ -562,6 +692,7 @@ def check(d):
             warns.append(f'점검 {"위험" if a["status"] == "bad" else "주의"}: {a.get("area")} · {a.get("item")} = {a.get("value")}')
     combo_check(d, errors, warns)
     inspect_check(d, errors, warns)
+    parity_check(d, errors, warns, "add", 1, (d.get("property") or {}).get("floor"))
     if errors:
         return errors, warns
     for rt in d.get("routes") or []:
@@ -584,6 +715,7 @@ def main():
     ap.add_argument("property")
     ap.add_argument("-o", "--out")
     ap.add_argument("--check", action="store_true", help="검사만 하고 파일을 만들지 않는다")
+    ap.add_argument("--artifact", action="store_true", help="claude.ai Artifact 용 조각(-artifact.html)도 함께 만든다")
     a = ap.parse_args()
     try:
         d = json.loads(pathlib.Path(a.property).read_text(encoding="utf-8"))
@@ -604,7 +736,12 @@ def main():
         print("[오류] -o 로 저장 경로를 주거나 --check 를 써라.", file=sys.stderr)
         return 1
     try:
-        pathlib.Path(a.out).write_text(render(d), encoding="utf-8")
+        html = render(d)
+        pathlib.Path(a.out).write_text(html, encoding="utf-8")
+        if a.artifact:
+            frag = pathlib.Path(a.out).with_name(pathlib.Path(a.out).stem + "-artifact.html")
+            frag.write_text(artifact_fragment(html), encoding="utf-8")
+            print(f"Artifact 조각: {frag}")
     except OSError as err:
         print(f"[오류] 저장 실패: {err}", file=sys.stderr)
         return 1

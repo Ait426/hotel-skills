@@ -1,386 +1,398 @@
 {
- "_note": "가상 숙소의 채워진 예시다. 숫자를 다른 숙소 계산에 쓰지 마라.",
- "property": {
-  "name": "샘플 스테이",
-  "tripId": "00000000",
-  "customerId": "00000000",
-  "surveyedAt": "2026-01-02",
-  "rateMode": "판매가 입력",
-  "channelManager": "WINGSCMS 계열",
-  "roundUnit": 1000
- },
- "coef": {
-  "c": 15,
-  "m": 10,
-  "verified": {
-   "c": true,
-   "m": true
+  "_note": "가상 숙소의 채워진 예시다. 숫자를 다른 숙소 계산에 쓰지 마라.",
+  "property": {
+    "name": "샘플 스테이",
+    "tripId": "00000000",
+    "customerId": "00000000",
+    "surveyedAt": "2026-01-02",
+    "rateMode": "판매가 입력",
+    "channelManager": "WINGSCMS 계열",
+    "roundUnit": 1000
   },
-  "source": "가상 예약 지불 정보 1건"
- },
- "plans": [
-  {
-   "name": "무료 취소",
-   "r": 1,
-   "verified": true
+  "coef": {
+    "c": 15,
+    "m": 10,
+    "verified": {
+      "c": true,
+      "m": true
+    },
+    "source": "가상 예약 지불 정보 1건"
   },
-  {
-   "name": "환불불가",
-   "r": 0.9,
-   "verified": true
-  }
- ],
- "rooms": [
-  {
-   "name": "스탠다드",
-   "rates": {
-    "WEEK": 200000,
-    "FRI": 230000,
-    "SAT": 260000
-   }
-  },
-  {
-   "name": "스위트",
-   "rates": {
-    "WEEK": 300000,
-    "FRI": 340000,
-    "SAT": 380000
-   }
-  }
- ],
- "promotions": [
-  {
-   "name": "샘플 Country Banner",
-   "type": "campaign",
-   "pct": 50,
-   "countries": "아시아 목록",
-   "rooms": [],
-   "status": "적용"
-  },
-  {
-   "name": "샘플 Package",
-   "type": "package",
-   "pct": 45,
-   "countries": "제한 없음",
-   "rooms": [],
-   "status": "적용"
-  },
-  {
-   "name": "샘플 XPOS",
-   "type": "xpos",
-   "pct": 30,
-   "countries": "서양 목록",
-   "rooms": [
-    "스탠다드"
-   ],
-   "status": "적용"
-  },
-  {
-   "name": "샘플 연박 혜택",
-   "type": "minStay",
-   "pct": 40,
-   "countries": "아시아 목록",
-   "rooms": [],
-   "status": "적용"
-  }
- ],
- "routes": [
-  {
-   "name": "아시아 · 1박 · 비회원",
-   "options": [
+  "plans": [
     {
-     "parts": [
-      "샘플 Country Banner"
-     ],
-     "member": false
-    }
-   ]
-  },
-  {
-   "name": "아시아 · 2박 이상 · 회원",
-   "options": [
-    {
-     "parts": [
-      "샘플 Country Banner"
-     ],
-     "member": false
+      "name": "무료 취소",
+      "r": 1,
+      "verified": true
     },
     {
-     "parts": [
-      "샘플 연박 혜택"
-     ],
-     "member": true
+      "name": "환불불가",
+      "r": 0.9,
+      "verified": true
     }
-   ]
-  },
-  {
-   "name": "교통 예약 · 회원",
-   "options": [
+  ],
+  "rooms": [
     {
-     "parts": [
-      "샘플 Package"
-     ],
-     "member": true
-    }
-   ]
-  },
-  {
-   "name": "서양 · 회원",
-   "options": [
-    {
-     "parts": [
-      "샘플 XPOS"
-     ],
-     "member": true
-    }
-   ]
-  }
- ],
- "targets": [
-  {
-   "room": "스탠다드",
-   "set": "WEEK",
-   "payout": 70000,
-   "basis": "최저 경로 · 환불불가"
-  },
-  {
-   "room": "스탠다드",
-   "set": "FRI",
-   "payout": 85000,
-   "basis": "최저 경로 · 환불불가"
-  }
- ],
- "ledger": [
-  {
-   "label": "예약 A",
-   "bookedOn": "당일",
-   "path": "아시아 · 2박 이상 · 회원",
-   "promo": "연박 40 + 회원 10",
-   "pprime": 180000,
-   "sigma": 50,
-   "extra": 0,
-   "payout": 76500,
-   "nights": 1
-  }
- ],
- "audit": [
-  {
-   "area": "요금 경쟁력",
-   "item": "가격 매력도",
-   "value": "경쟁력 없는 요금 12개",
-   "status": "bad",
-   "rule": "0개",
-   "action": "요금 모니터링에서 더 싼 플랫폼과 재판매 여부 확인",
-   "source": "Property Health 대시보드"
-  },
-  {
-   "area": "리뷰",
-   "item": "청결도",
-   "value": "7.6 (경쟁권 8.2)",
-   "status": "warn",
-   "rule": "경쟁권 이상",
-   "action": "부정 리뷰의 청결 언급 확인",
-   "source": "리뷰 분석"
-  },
-  {
-   "area": "정보",
-   "item": "정보 점수",
-   "value": "95%",
-   "status": "ok",
-   "source": "호텔 개요"
-  }
- ],
- "summary": [
-  {
-   "label": "수수료 c",
-   "value": "15%",
-   "note": "가상 지불 정보 기준"
-  }
- ],
- "programs": [
-  {
-   "name": "TripPlus",
-   "status": "활성",
-   "range": "등급별 할인",
-   "setting": "전 등급 10%",
-   "note": "가상 값",
-   "verified": true
-  },
-  {
-   "name": "CoinPlus",
-   "status": "미등록",
-   "range": null,
-   "setting": null,
-   "note": "소개 화면만 뜸",
-   "verified": true
-  },
-  {
-   "name": "Preferred Partner",
-   "status": "미확인",
-   "range": null,
-   "setting": null,
-   "note": "",
-   "verified": false
-  }
- ],
- "content": {
-  "photos": {
-   "total": 120,
-   "lowRes": null,
-   "untagged": null,
-   "note": "가족 분류 0장"
-  },
-  "reviews": {
-   "score": 8.3,
-   "count": 90,
-   "unanswered": null,
-   "detail": {
-    "위치": 8.8,
-    "시설": 7.9,
-    "서비스": 8.4,
-    "청결도": 8.0
-   },
-   "compare": {
-    "위치": 8.2,
-    "시설": 8.1,
-    "서비스": 8.3,
-    "청결도": 8.2
-   }
-  },
-  "mapping": {
-   "mapped": 2,
-   "total": 2,
-   "unmapped": 0,
-   "note": "채널 매니저 연결됨"
-  }
- },
- "ratePlans": [
-  {
-   "name": "무료 취소",
-   "id": null,
-   "rooms": 2,
-   "base": "—",
-   "policy": "1일 전 무료 취소",
-   "sold": null,
-   "status": "판매 가능"
-  },
-  {
-   "name": "환불불가",
-   "id": null,
-   "rooms": 2,
-   "base": "무료 취소보다 10% 낮음",
-   "policy": "환불 불가",
-   "sold": null,
-   "status": "판매 가능"
-  }
- ],
- "findings": [
-  {
-   "title": "청결도가 항목 중 가장 낮다",
-   "severity": "med",
-   "detail": "청결 언급 리뷰부터 확인한다",
-   "evidence": "리뷰 항목 점수 (가상)",
-   "revised": null
-  }
- ],
- "measurements": [
-  {
-   "label": "날짜 A",
-   "condition": "국내 · 데스크탑 · 1박 2인 · 비로그인",
-   "input": 200000,
-   "shown": 160000
-  },
-  {
-   "label": "날짜 B",
-   "condition": "같은 조건",
-   "input": 230000,
-   "shown": 184000
-  },
-  {
-   "label": "날짜 C",
-   "condition": "같은 조건",
-   "input": 260000,
-   "shown": 208000
-  }
- ],
- "promoGroups": [
-  {
-   "name": "주 프로모션 (겹치지 않는 것 중 하나)",
-   "mode": "single",
-   "items": [
-    {
-     "name": "샘플 Country Banner",
-     "pct": 50,
-     "on": true
+      "name": "스탠다드",
+      "rates": {
+        "WEEK": 200000,
+        "FRI": 230000,
+        "SAT": 260000
+      }
     },
     {
-     "name": "샘플 Package",
-     "pct": 45,
-     "on": false
+      "name": "스위트",
+      "rates": {
+        "WEEK": 300000,
+        "FRI": 340000,
+        "SAT": 380000
+      }
+    }
+  ],
+  "promotions": [
+    {
+      "name": "샘플 Country Banner",
+      "type": "campaign",
+      "pct": 50,
+      "countries": "아시아 목록",
+      "rooms": [],
+      "status": "적용"
     },
     {
-     "name": "샘플 XPOS",
-     "pct": 30,
-     "on": false
+      "name": "샘플 Package",
+      "type": "package",
+      "pct": 45,
+      "countries": "제한 없음",
+      "rooms": [],
+      "status": "적용"
     },
     {
-     "name": "샘플 연박 혜택",
-     "pct": 40,
-     "on": false
-    }
-   ]
-  },
-  {
-   "name": "회원 할인",
-   "mode": "multi",
-   "items": [
+      "name": "샘플 XPOS",
+      "type": "xpos",
+      "pct": 30,
+      "countries": "서양 목록",
+      "rooms": [
+        "스탠다드"
+      ],
+      "status": "적용"
+    },
     {
-     "name": "회원 할인 m",
-     "pct": 10,
-     "on": false
+      "name": "샘플 연박 혜택",
+      "type": "minStay",
+      "pct": 40,
+      "countries": "아시아 목록",
+      "rooms": [],
+      "status": "적용"
     }
-   ]
-  }
- ],
- "commissionParts": [
-  {
-   "name": "수수료 c",
-   "kind": "base",
-   "pct": 15
-  }
- ],
- "channels": [
-  {
-   "name": "이 채널",
-   "base": true,
-   "rates": {
-    "WEEK": 200000,
-    "SAT": 260000
-   }
+  ],
+  "routes": [
+    {
+      "name": "아시아 · 1박 · 비회원",
+      "options": [
+        {
+          "parts": [
+            "샘플 Country Banner"
+          ],
+          "member": false
+        }
+      ]
+    },
+    {
+      "name": "아시아 · 2박 이상 · 회원",
+      "options": [
+        {
+          "parts": [
+            "샘플 Country Banner"
+          ],
+          "member": false
+        },
+        {
+          "parts": [
+            "샘플 연박 혜택"
+          ],
+          "member": true
+        }
+      ]
+    },
+    {
+      "name": "교통 예약 · 회원",
+      "options": [
+        {
+          "parts": [
+            "샘플 Package"
+          ],
+          "member": true
+        }
+      ]
+    },
+    {
+      "name": "서양 · 회원",
+      "options": [
+        {
+          "parts": [
+            "샘플 XPOS"
+          ],
+          "member": true
+        }
+      ]
+    }
+  ],
+  "targets": [
+    {
+      "room": "스탠다드",
+      "set": "WEEK",
+      "payout": 70000,
+      "basis": "최저 경로 · 환불불가"
+    },
+    {
+      "room": "스탠다드",
+      "set": "FRI",
+      "payout": 85000,
+      "basis": "최저 경로 · 환불불가"
+    }
+  ],
+  "ledger": [
+    {
+      "label": "예약 A",
+      "bookedOn": "당일",
+      "path": "아시아 · 2박 이상 · 회원",
+      "promo": "연박 40 + 회원 10",
+      "pprime": 180000,
+      "sigma": 50,
+      "extra": 0,
+      "payout": 76500,
+      "nights": 1
+    }
+  ],
+  "audit": [
+    {
+      "area": "요금 경쟁력",
+      "item": "가격 매력도",
+      "value": "경쟁력 없는 요금 12개",
+      "status": "bad",
+      "rule": "0개",
+      "action": "요금 모니터링에서 더 싼 플랫폼과 재판매 여부 확인",
+      "source": "Property Health 대시보드"
+    },
+    {
+      "area": "리뷰",
+      "item": "청결도",
+      "value": "7.6 (경쟁권 8.2)",
+      "status": "warn",
+      "rule": "경쟁권 이상",
+      "action": "부정 리뷰의 청결 언급 확인",
+      "source": "리뷰 분석"
+    },
+    {
+      "area": "정보",
+      "item": "정보 점수",
+      "value": "95%",
+      "status": "ok",
+      "source": "호텔 개요"
+    }
+  ],
+  "summary": [
+    {
+      "label": "수수료 c",
+      "value": "15%",
+      "note": "가상 지불 정보 기준"
+    }
+  ],
+  "programs": [
+    {
+      "name": "TripPlus",
+      "status": "활성",
+      "range": "등급별 할인",
+      "setting": "전 등급 10%",
+      "note": "가상 값",
+      "verified": true
+    },
+    {
+      "name": "CoinPlus",
+      "status": "미등록",
+      "range": null,
+      "setting": null,
+      "note": "소개 화면만 뜸",
+      "verified": true
+    },
+    {
+      "name": "Preferred Partner",
+      "status": "미확인",
+      "range": null,
+      "setting": null,
+      "note": "",
+      "verified": false
+    }
+  ],
+  "content": {
+    "photos": {
+      "total": 120,
+      "lowRes": null,
+      "untagged": null,
+      "note": "가족 분류 0장"
+    },
+    "reviews": {
+      "score": 8.3,
+      "count": 90,
+      "unanswered": null,
+      "detail": {
+        "위치": 8.8,
+        "시설": 7.9,
+        "서비스": 8.4,
+        "청결도": 8.0
+      },
+      "compare": {
+        "위치": 8.2,
+        "시설": 8.1,
+        "서비스": 8.3,
+        "청결도": 8.2
+      }
+    },
+    "mapping": {
+      "mapped": 2,
+      "total": 2,
+      "unmapped": 0,
+      "note": "채널 매니저 연결됨"
+    }
   },
-  {
-   "name": "다른 채널 A",
-   "rates": {
-    "WEEK": 180000,
-    "SAT": 240000
-   }
-  },
-  {
-   "name": "다른 채널 B",
-   "rates": {
-    "WEEK": 150000,
-    "SAT": 210000
-   }
-  }
- ],
- "open": [
-  {
-   "item": "캠페인 + 회원 중복",
-   "how": "예약 엑셀 Promotion 칸에서 캠페인이 찍힌 건의 회원 동반 여부를 센다"
-  },
-  {
-   "item": "Preferred Partner 설정",
-   "how": "미확인 프로그램은 화면에서 다시 읽는다"
-  }
- ]
+  "ratePlans": [
+    {
+      "name": "무료 취소",
+      "id": null,
+      "rooms": 2,
+      "base": "—",
+      "policy": "1일 전 무료 취소",
+      "sold": null,
+      "status": "판매 가능"
+    },
+    {
+      "name": "환불불가",
+      "id": null,
+      "rooms": 2,
+      "base": "무료 취소보다 10% 낮음",
+      "policy": "환불 불가",
+      "sold": null,
+      "status": "판매 가능"
+    }
+  ],
+  "findings": [
+    {
+      "title": "청결도가 항목 중 가장 낮다",
+      "severity": "med",
+      "detail": "청결 언급 리뷰부터 확인한다",
+      "evidence": "리뷰 항목 점수 (가상)",
+      "revised": null
+    }
+  ],
+  "measurements": [
+    {
+      "label": "날짜 A",
+      "condition": "국내 · 데스크탑 · 1박 2인 · 비로그인",
+      "input": 200000,
+      "shown": 160000
+    },
+    {
+      "label": "날짜 B",
+      "condition": "같은 조건",
+      "input": 230000,
+      "shown": 184000
+    },
+    {
+      "label": "날짜 C",
+      "condition": "같은 조건",
+      "input": 260000,
+      "shown": 208000
+    }
+  ],
+  "promoGroups": [
+    {
+      "name": "주 프로모션 (겹치지 않는 것 중 하나)",
+      "mode": "single",
+      "items": [
+        {
+          "name": "샘플 Country Banner",
+          "pct": 50,
+          "on": true
+        },
+        {
+          "name": "샘플 Package",
+          "pct": 45,
+          "on": false
+        },
+        {
+          "name": "샘플 XPOS",
+          "pct": 30,
+          "on": false
+        },
+        {
+          "name": "샘플 연박 혜택",
+          "pct": 40,
+          "on": false
+        }
+      ]
+    },
+    {
+      "name": "회원 할인",
+      "mode": "multi",
+      "items": [
+        {
+          "name": "회원 할인 m",
+          "pct": 10,
+          "on": false
+        }
+      ]
+    }
+  ],
+  "commissionParts": [
+    {
+      "name": "수수료 c",
+      "kind": "base",
+      "pct": 15
+    },
+    {
+      "name": "CoinPlus (가상 예시, 미참여)",
+      "kind": "base",
+      "pct": 5,
+      "range": [
+        0,
+        10,
+        1
+      ],
+      "on": false,
+      "note": "켜면 결제액에서 추가 차감"
+    }
+  ],
+  "channels": [
+    {
+      "name": "이 채널",
+      "base": true,
+      "rates": {
+        "WEEK": 200000,
+        "SAT": 260000
+      }
+    },
+    {
+      "name": "다른 채널 A",
+      "rates": {
+        "WEEK": 180000,
+        "SAT": 240000
+      }
+    },
+    {
+      "name": "다른 채널 B",
+      "rates": {
+        "WEEK": 150000,
+        "SAT": 210000
+      }
+    }
+  ],
+  "open": [
+    {
+      "item": "캠페인 + 회원 중복",
+      "how": "예약 엑셀 Promotion 칸에서 캠페인이 찍힌 건의 회원 동반 여부를 센다"
+    },
+    {
+      "item": "Preferred Partner 설정",
+      "how": "미확인 프로그램은 화면에서 다시 읽는다"
+    }
+  ]
 }
