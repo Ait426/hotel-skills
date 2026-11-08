@@ -201,6 +201,190 @@ def audit_card(d):
                 '<p class="note">조회 시점의 스냅샷이다. 프로그램 요건과 심사 일정은 화면 문구를 옮긴 것이다.</p></div>')
 
 
+# ── 현재 설정 · 발견 사항 · 프로그램 · 콘텐츠 · 요금제 · 노출가 실측 ──
+# 아고다 스킬과 같은 산출물을 같은 칸 이름으로 낸다. 칸이 비면 그 카드는 빠진다.
+UNVERIFIED = ' <span class="tag warn">미확인</span>'
+LOWEST = ' <span class="tag warn">최저</span>'
+SEV = {"high": ("bad", "높음"), "med": ("warn", "보통"), "info": ("", "참고")}
+CSS += """.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:12px 14px;min-width:0}
+.tile .k{font-size:12px;color:var(--dim)}.tile .v{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.tile .n{font-size:12px;color:var(--dim);overflow-wrap:anywhere}
+.call{border-left:3px solid var(--line);background:var(--sunk);border-radius:0 7px 7px 0;padding:10px 14px;margin:0 0 10px;font-size:14px}
+.call.bad{border-color:var(--bad);background:var(--bad-soft)}.call.warn{border-color:var(--accent);background:var(--warn-soft)}
+.call .lbl{display:block;font-weight:700;margin-bottom:4px}
+"""
+
+
+def dash(v, unit=""):
+    return "—" if v is None or v == "" else f"{v:,}{unit}" if isinstance(v, (int, float)) else f"{esc(v)}{unit}"
+
+
+def summary_tiles(d):
+    """맨 위 요약. 손으로 넣은 summary[] 다음에 자동으로 세는 값을 붙인다."""
+    tiles = [(t.get("label"), t.get("value"), t.get("note")) for t in d.get("summary") or []]
+    promos = d.get("promotions")
+    if isinstance(promos, list) and promos:
+        on = sum(1 for m in promos if (m.get("status") or "적용") == "적용")
+        tiles.append(("적용 중 프로모션", f"{on}건", f"전체 {len(promos)}건"))
+    fs = d.get("findings") or []
+    if fs:
+        tiles.append(("발견 사항", f'{sum(1 for f in fs if f.get("severity") == "high")}건 높음',
+                      f'보통 {sum(1 for f in fs if f.get("severity") == "med")} · 참고 {sum(1 for f in fs if f.get("severity") not in ("high", "med"))}'))
+    au = d.get("audit") or []
+    if au:
+        tiles.append(("점검", f'위험 {sum(1 for a in au if a.get("status") == "bad")}',
+                      f'주의 {sum(1 for a in au if a.get("status") == "warn")} · 전체 {len(au)}'))
+    floor = (d.get("property") or {}).get("floor")
+    if floor is None:
+        floor = (d.get("coef") or {}).get("floor")
+    tiles.append(("입금가 하한", dash(floor, "원") if floor is not None else "미지정", "사용자가 정한 값"))
+    body = "".join(f'<div class="tile"><div class="k">{esc(k)}</div><div class="v">{esc(v)}</div>'
+                   f'<div class="n">{esc(n)}</div></div>' for k, v, n in tiles)
+    return f'<div class="tiles">{body}</div>'
+
+
+def findings_card(d):
+    """결론. 심각도 순, 실측(근거)과 판단(detail)을 나눠 보여 준다."""
+    rank = {"high": 0, "med": 1, "info": 2}
+    out = []
+    for f in sorted(d.get("findings") or [], key=lambda x: rank.get(x.get("severity"), 3)):
+        cls, label = SEV.get(f.get("severity"), SEV["info"])
+        rev = f'<br><b>정정:</b> {esc(f["revised"])}' if f.get("revised") else ""
+        ev = f'<br><small>근거 · {esc(f["evidence"])}</small>' if f.get("evidence") else ""
+        out.append(f'<div class="call {cls}"><span class="lbl">{esc(f.get("title"))} <span class="tag {cls}">{label}</span></span>'
+                   f'{esc(f.get("detail"))}{rev}{ev}</div>')
+    return card("발견 사항", f'<div class="body">{"".join(out)}</div>') if out else ""
+
+
+def programs_card(d):
+    """설정 가능 범위와 현재 설정은 다른 사실이다. 칸을 나눠 적는다."""
+    rows = [f'<tr><td class="l">{esc(x.get("name"))}{"" if x.get("verified", True) else UNVERIFIED}</td>'
+            f'<td class="l">{dash(x.get("status"))}</td><td class="l">{dash(x.get("range"))}</td><td class="l"><b>{dash(x.get("setting"))}</b></td>'
+            f'<td class="l">{esc(x.get("note"))}</td></tr>' for x in d.get("programs") or []]
+    return card("프로그램", f'<div class="body">{table(["프로그램", "상태", "설정 가능 범위", "현재 설정", "비고"], rows)}</div>') if rows else ""
+
+
+def content_card(d):
+    ct = d.get("content") or {}
+    ph, rv, mp = ct.get("photos"), ct.get("reviews"), ct.get("mapping")
+    tiles = []
+    if ph:
+        tiles.append(("사진", dash(ph.get("total"), "장"), f'저해상도 {dash(ph.get("lowRes"))} · 태그 누락 {dash(ph.get("untagged"))}'))
+    if rv:
+        det = rv.get("detail") or {}
+        low = min(det, key=det.get) if det else None
+        tiles.append(("리뷰", dash(rv.get("score")), f'{dash(rv.get("count"))}건 · 미답변 {dash(rv.get("unanswered"))}'
+                      + (f' · 최저 {low} {det[low]}' if low else "")))
+    if mp:
+        tot = mp.get("total")
+        tiles.append(("객실 매핑", f'{dash(mp.get("mapped"))}/{dash(tot)}' if tot is not None else dash(mp.get("mapped")),
+                      f'미매핑 {dash(mp.get("unmapped"))}'))
+    if not tiles:
+        return ""
+    body = "".join(f'<div class="tile"><div class="k">{esc(k)}</div><div class="v">{v}</div><div class="n">{esc(n)}</div></div>'
+                   for k, v, n in tiles)
+    notes = "".join(f'<p class="note">{esc(k)}: {esc(x.get("note"))}</p>' for k, x in (("사진", ph), ("리뷰", rv), ("매핑", mp)) if x and x.get("note"))
+    det = (rv or {}).get("detail") or {}
+    if det:
+        low = min(det, key=det.get)
+        rows = [f'<tr><td>{esc(k)}{LOWEST if k == low else ""}</td><td>{esc(v)}</td>'
+                f'<td>{dash(((rv.get("compare") or {}).get(k)))}</td></tr>' for k, v in sorted(det.items(), key=lambda x: -x[1])]
+        notes += table(["리뷰 항목", "점수", "비교(경쟁권 등)"], rows)
+    return card("콘텐츠", f'<div class="body"><div class="tiles">{body}</div>{notes}</div>')
+
+
+def plans_card(d):
+    """요금제 인벤토리. 가격(plans·rates)과 다른 것이다."""
+    rows = [f'<tr><td class="l">{esc(x.get("name"))}</td><td>{dash(x.get("id"))}</td><td>{dash(x.get("rooms"))}</td>'
+            f'<td class="l">{dash(x.get("base"))}</td><td class="l">{dash(x.get("policy"))}</td><td>{dash(x.get("sold"))}</td>'
+            f'<td><span class="tag {"ok" if x.get("status") in ("적용 중", "활성", "판매 중") else ""}">{dash(x.get("status"))}</span></td></tr>'
+            for x in d.get("ratePlans") or []]
+    return card("요금제", f'<div class="body">{table(["요금제", "ID", "객실 수", "기준 요금제", "취소 정책", "예약 수", "상태"], rows)}'
+                '<p class="note">예약 0건인 요금제는 노출가가 잘못됐거나 둘 이유가 없는 것이다. 끄기 전에 남은 요금제가 모든 객실을 덮는지 본다.</p></div>') if rows else ""
+
+
+def measure_points(d):
+    """노출가 실측. ratio = 화면값 ÷ 입력값. 3점 이상이면 비율이 서로 맞는지(선형) 본다."""
+    out = []
+    for m in d.get("measurements") or []:
+        i, s = m.get("input"), m.get("shown")
+        ratio = s / i if isinstance(i, (int, float)) and isinstance(s, (int, float)) and i else None
+        out.append((m, ratio))
+    return out
+
+
+def measure_card(d):
+    pts = measure_points(d)
+    if not pts:
+        return ""
+    rows = []
+    for m, r in pts:
+        e = m.get("expected")
+        gap = (m["shown"] - e) if isinstance(e, (int, float)) and isinstance(m.get("shown"), (int, float)) else None
+        tag = "—" if gap is None else f'<span class="tag {"ok" if abs(gap) <= (m.get("tolerance") or 1) else "bad"}">{gap:+,.0f}</span>'
+        rows.append(f'<tr><td class="l">{esc(m.get("label"))}</td><td class="l">{esc(m.get("condition"))}</td><td>{dash(m.get("input"))}</td>'
+                    f'<td>{dash(m.get("shown"))}</td><td>{"—" if r is None else f"{r:.4f}"}</td><td>{dash(e)}</td><td>{tag}</td></tr>')
+    rs = [r for _, r in pts if r is not None]
+    note = ""
+    if len(rs) >= 3:
+        ok = max(rs) - min(rs) <= 0.001
+        note = f'<p class="note"><span class="tag {"ok" if ok else "warn"}">{"선형 일치" if ok else "비율 어긋남"}</span> 비율 범위 {min(rs):.4f}~{max(rs):.4f} (허용 0.001). 조건이 다른 점은 다른 할인이 붙었을 수 있다.</p>'
+    return card("노출가 실측 (고객 페이지)", f'<div class="body">{table(["측정", "조회 조건", "입력값", "화면값", "비율", "공식값", "차이"], rows)}{note}'
+                '<p class="note">우리 요금(직판)만 넣는다. 재판매 오퍼 값은 넣지 않는다.</p></div>')
+
+
+def inspect_check(d, errors, warns):
+    """아고다 스킬과 같은 자체 점검: 형식 오류, 미확인 값이 보고에 빠졌는지, 실측 비율."""
+    said = json.dumps([d.get("findings") or [], d.get("open") or []], ensure_ascii=False)
+    for f in d.get("findings") or []:
+        if f.get("severity") not in SEV:
+            errors.append(f'발견 사항 {f.get("title")}: severity 는 {"·".join(SEV)} 중 하나다.')
+        if not f.get("evidence"):
+            warns.append(f'발견 사항 {f.get("title")}: 근거(evidence)가 비었다. 실측과 판단을 나눠 적는다.')
+    for x in d.get("programs") or []:
+        if x.get("verified") is False and (x.get("name") or "") not in said:
+            warns.append(f'프로그램 {x.get("name")}: 미확인인데 findings·open 어디에도 없다.')
+    for k, x in ((d.get("content") or {}).items()):
+        for f, v in (x or {}).items():
+            if f in ("total", "lowRes", "untagged", "count", "unanswered", "mapped", "unmapped") and v is not None and not isinstance(v, (int, float)):
+                errors.append(f'content.{k}.{f} 는 숫자다.')
+    for x in d.get("ratePlans") or []:
+        if x.get("sold") == 0:
+            warns.append(f'요금제 {x.get("name")}: 예약 0건. 노출가나 존재 이유를 확인한다.')
+    rs = [r for _, r in measure_points(d) if r is not None]
+    if len(rs) >= 3 and max(rs) - min(rs) > 0.001:
+        warns.append(f'노출가 실측 비율이 어긋난다 ({min(rs):.4f}~{max(rs):.4f}). 조건이 같은지, 재판매 값이 섞였는지 본다.')
+    if d.get("measurements") is not None and 0 < len(rs) < 3:
+        warns.append("노출가 실측이 3점 미만이다. 선형 확인에는 날짜 3개 이상이 필요하다.")
+
+
+
+PAGE_CSS = """.pgnav{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 18px}
+.pgtab{font:inherit;font-size:14px;color:var(--dim);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 14px;cursor:pointer}
+.pgtab[aria-pressed=true]{color:var(--text);background:var(--sunk);border-color:var(--text);font-weight:700}
+"""
+CSS += PAGE_CSS
+PAGE_JS = """(function(){var t=[].slice.call(document.querySelectorAll('.pgtab'));if(!t.length)return;
+function show(k,push){if(!document.getElementById('pg-'+k))k=t[0].dataset.pg;
+t.forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.pg===k))});
+document.querySelectorAll('.page').forEach(function(p){p.hidden=p.id!=='pg-'+k});
+if(push){window.scrollTo(0,0);history.replaceState(null,'','#'+k)}}
+t.forEach(function(b){b.onclick=function(){show(b.dataset.pg,true)}});show((location.hash||'#').slice(1),false)})();"""
+
+
+def paged(pages):
+    """아고다 콘솔과 같은 네 화면(현재 설정 · 계산기 · 요금표 · 실측 기록). 빈 화면은 빠진다."""
+    made = [(f"p{i}", label, "".join(x for x in cards if x)) for i, (label, cards) in enumerate(pages)]
+    made = [m for m in made if m[2]]
+    if not made:
+        return ""
+    nav = "".join(f'<button class="pgtab" data-pg="{k}" aria-pressed="{str(i == 0).lower()}">{esc(label)}</button>'
+                  for i, (k, label, _) in enumerate(made))
+    body = "".join(f'<div class="page" id="pg-{k}"{"" if i == 0 else " hidden"}>{h}</div>' for i, (k, _, h) in enumerate(made))
+    return f'<nav class="pgnav">{nav}</nav>{body}<script>{PAGE_JS}</script>'
+
+
 def open_card(d):
     items = "".join(f'<li>{esc(o.get("item"))}<br><small>{esc(o.get("how"))}</small></li>' for o in d.get("open") or [])
     return card("미확인 항목", f'<div class="body"><ul>{items}</ul></div>') if items else ""
@@ -212,7 +396,10 @@ def render(d):
     payload.pop("_note", None)
     payload["leads"] = lead_points(d.get("promotions") or [])
     data = json.dumps(payload, ensure_ascii=False).replace("</", "<\\/")
-    parts = [audit_card(d), coef_card(d), calc_card(), grid_card(), floor_card(d), promo_card(d), ledger_card(d), open_card(d)]
+    parts = [paged([("현재 설정", [summary_tiles(d), findings_card(d), audit_card(d), programs_card(d), content_card(d), plans_card(d), promo_card(d), open_card(d)]),
+                    ("계산기", [coef_card(d), calc_card()]),
+                    ("요금표", [grid_card(), floor_card(d)]),
+                    ("실측 기록", [measure_card(d), ledger_card(d)])])]
     title = esc(p.get("name") or "숙소")
     return f"""<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{title} 부킹 콘솔</title><style>{CSS}</style></head><body><div class="wrap">
@@ -256,6 +443,7 @@ def check(d):
             errors.append(f'점검 {a.get("item")}: status 는 {"·".join(AUDIT)} 중 하나다.')
         elif a["status"] in ("bad", "warn"):
             warns.append(f'점검 {"위험" if a["status"] == "bad" else "주의"}: {a.get("area")} · {a.get("item")} = {a.get("value")}')
+    inspect_check(d, errors, warns)
     if errors:
         return errors, warns
     # 어기면 비회원이 회원보다 싸지거나 사전예약이 평시보다 비싸진다

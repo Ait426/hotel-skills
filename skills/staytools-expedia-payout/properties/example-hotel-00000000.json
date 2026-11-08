@@ -12,41 +12,289 @@
   "c": 15,
   "a": 5,
   "p": 0.9,
-  "verified": { "T": true, "c": true, "a": true, "p": false },
+  "verified": {
+   "T": true,
+   "c": true,
+   "a": true,
+   "p": false
+  },
   "source": "가상 예약 결제 내역 1건"
  },
  "acceleratorHistory": [
-  { "period": "2025-12 ~", "rate": 5, "source": "가상 예약 1건" }
+  {
+   "period": "2025-12 ~",
+   "rate": 5,
+   "source": "가상 예약 1건"
+  }
  ],
  "rooms": [
-  { "name": "스탠다드", "rates": { "WEEK": 165000, "FRI": 187000, "SAT": 209000 } },
-  { "name": "트윈", "rates": { "WEEK": 181500, "FRI": 203500, "SAT": 225500 } }
+  {
+   "name": "스탠다드",
+   "rates": {
+    "WEEK": 165000,
+    "FRI": 187000,
+    "SAT": 209000
+   }
+  },
+  {
+   "name": "트윈",
+   "rates": {
+    "WEEK": 181500,
+    "FRI": 203500,
+    "SAT": 225500
+   }
+  }
  ],
  "promotions": [
-  { "name": "KR Same-day", "id": null, "scope": "pos", "cond": "sameDay", "pct": 20, "memberPct": 30, "status": "적용" },
-  { "name": "KR Advance 3days", "id": null, "scope": "pos", "cond": "advance", "minDays": 3, "pct": 23, "memberPct": 33, "status": "적용" },
-  { "name": "KR Early Bird 10days", "id": null, "scope": "pos", "cond": "advance", "minDays": 10, "pct": 27, "memberPct": 37, "status": "적용" },
-  { "name": "SD - Same-day", "id": null, "scope": "base", "cond": "sameDay", "pct": 5, "memberPct": 15, "status": "적용" },
-  { "name": "ADV3 - Advance 3days", "id": null, "scope": "base", "cond": "advance", "minDays": 3, "pct": 8, "memberPct": 18, "status": "적용" },
-  { "name": "EB10 - Early Bird 10days", "id": null, "scope": "base", "cond": "advance", "minDays": 10, "pct": 12, "memberPct": 22, "status": "적용" },
-  { "name": "회원 프로모션", "id": null, "scope": "member", "pct": 10, "status": "적용" }
+  {
+   "name": "KR Same-day",
+   "id": null,
+   "scope": "pos",
+   "cond": "sameDay",
+   "pct": 20,
+   "memberPct": 30,
+   "status": "적용"
+  },
+  {
+   "name": "KR Advance 3days",
+   "id": null,
+   "scope": "pos",
+   "cond": "advance",
+   "minDays": 3,
+   "pct": 23,
+   "memberPct": 33,
+   "status": "적용"
+  },
+  {
+   "name": "KR Early Bird 10days",
+   "id": null,
+   "scope": "pos",
+   "cond": "advance",
+   "minDays": 10,
+   "pct": 27,
+   "memberPct": 37,
+   "status": "적용"
+  },
+  {
+   "name": "SD - Same-day",
+   "id": null,
+   "scope": "base",
+   "cond": "sameDay",
+   "pct": 5,
+   "memberPct": 15,
+   "status": "적용"
+  },
+  {
+   "name": "ADV3 - Advance 3days",
+   "id": null,
+   "scope": "base",
+   "cond": "advance",
+   "minDays": 3,
+   "pct": 8,
+   "memberPct": 18,
+   "status": "적용"
+  },
+  {
+   "name": "EB10 - Early Bird 10days",
+   "id": null,
+   "scope": "base",
+   "cond": "advance",
+   "minDays": 10,
+   "pct": 12,
+   "memberPct": 22,
+   "status": "적용"
+  },
+  {
+   "name": "회원 프로모션",
+   "id": null,
+   "scope": "member",
+   "pct": 10,
+   "status": "적용"
+  }
  ],
- "discountLimit": { "min": 5, "max": 75, "source": "화면 원문" },
+ "discountLimit": {
+  "min": 5,
+  "max": 75,
+  "source": "화면 원문"
+ },
  "targets": [
-  { "from": 0, "to": 0, "payout": 90000, "basis": "자국 POS 회원" },
-  { "from": 1, "to": 2, "payout": 90000, "basis": "자국 POS 회원" },
-  { "from": 3, "to": 9, "payout": 86000, "basis": "자국 POS 회원" },
-  { "from": 10, "to": null, "payout": 82000, "basis": "자국 POS 회원" }
+  {
+   "from": 0,
+   "to": 0,
+   "payout": 90000,
+   "basis": "자국 POS 회원"
+  },
+  {
+   "from": 1,
+   "to": 2,
+   "payout": 90000,
+   "basis": "자국 POS 회원"
+  },
+  {
+   "from": 3,
+   "to": 9,
+   "payout": 86000,
+   "basis": "자국 POS 회원"
+  },
+  {
+   "from": 10,
+   "to": null,
+   "payout": 82000,
+   "basis": "자국 POS 회원"
+  }
  ],
  "ledger": [
-  { "label": "예약 A", "bookedOn": "당일", "promo": "KR Same-day-Members 30%", "pretax": 150000, "after": 105000, "paid": 115500, "accelRate": 5, "payout": 92925 }
+  {
+   "label": "예약 A",
+   "bookedOn": "당일",
+   "promo": "KR Same-day-Members 30%",
+   "pretax": 150000,
+   "after": 105000,
+   "paid": 115500,
+   "accelRate": 5,
+   "payout": 92925
+  }
  ],
  "audit": [
-  { "area": "노출", "item": "상품 강도", "value": "62/100 (요금 피드백 경쟁사 중 3위)", "status": "bad", "rule": "가상 기준 80점", "action": "요금 경쟁력 피드백의 반복 문제부터 확인", "source": "노출 순위 화면" },
-  { "area": "콘텐츠", "item": "객실 설명 이상 문구", "value": "2개 객실", "status": "warn", "action": "객실 용품 설정 확인", "source": "사진 화면 객실 설명" },
-  { "area": "후기", "item": "답변 대기 후기", "value": "0건", "status": "ok", "source": "투숙 후 이용 후기" }
+  {
+   "area": "노출",
+   "item": "상품 강도",
+   "value": "62/100 (요금 피드백 경쟁사 중 3위)",
+   "status": "bad",
+   "rule": "가상 기준 80점",
+   "action": "요금 경쟁력 피드백의 반복 문제부터 확인",
+   "source": "노출 순위 화면"
+  },
+  {
+   "area": "콘텐츠",
+   "item": "객실 설명 이상 문구",
+   "value": "2개 객실",
+   "status": "warn",
+   "action": "객실 용품 설정 확인",
+   "source": "사진 화면 객실 설명"
+  },
+  {
+   "area": "후기",
+   "item": "답변 대기 후기",
+   "value": "0건",
+   "status": "ok",
+   "source": "투숙 후 이용 후기"
+  }
+ ],
+ "summary": [
+  {
+   "label": "입금 계수 k",
+   "value": "0.75",
+   "note": "가상 결제 내역 기준"
+  }
+ ],
+ "programs": [
+  {
+   "name": "엑셀러레이터",
+   "status": "활성",
+   "range": "화면 선택지",
+   "setting": "5%",
+   "note": "가상 값",
+   "verified": true
+  },
+  {
+   "name": "TravelAds",
+   "status": "미운영",
+   "range": null,
+   "setting": null,
+   "note": "소개 화면만 뜸",
+   "verified": true
+  },
+  {
+   "name": "요금 자동 매칭",
+   "status": "미확인",
+   "range": null,
+   "setting": null,
+   "note": "",
+   "verified": false
+  }
+ ],
+ "content": {
+  "photos": {
+   "total": 60,
+   "lowRes": 1,
+   "untagged": null,
+   "note": "범주별 누락 없음"
+  },
+  "reviews": {
+   "score": 4.2,
+   "count": 80,
+   "unanswered": 0,
+   "detail": {
+    "청결도": 4.0,
+    "시설 상태": 4.1,
+    "직원": 4.6
+   }
+  },
+  "mapping": {
+   "mapped": 5,
+   "total": 6,
+   "unmapped": 1,
+   "note": "누락된 객실 유형 1"
+  }
+ },
+ "ratePlans": [
+  {
+   "name": "표준 요금",
+   "id": null,
+   "rooms": 5,
+   "base": "—",
+   "policy": "1일 전 무료 취소",
+   "sold": 25,
+   "status": "활성"
+  },
+  {
+   "name": "패키지 전용",
+   "id": null,
+   "rooms": 5,
+   "base": "표준 요금 파생",
+   "policy": "1일 전 무료 취소",
+   "sold": 0,
+   "status": "활성"
+  }
+ ],
+ "findings": [
+  {
+   "title": "청결도가 항목 중 가장 낮다",
+   "severity": "med",
+   "detail": "청결 언급 리뷰부터 확인한다",
+   "evidence": "리뷰 항목 점수 (가상)",
+   "revised": null
+  }
+ ],
+ "measurements": [
+  {
+   "label": "날짜 A",
+   "condition": "국내 · 데스크탑 · 1박 2인 · 비로그인",
+   "input": 200000,
+   "shown": 160000
+  },
+  {
+   "label": "날짜 B",
+   "condition": "같은 조건",
+   "input": 230000,
+   "shown": 184000
+  },
+  {
+   "label": "날짜 C",
+   "condition": "같은 조건",
+   "input": 260000,
+   "shown": 208000
+  }
  ],
  "open": [
-  { "item": "패키지 배수 p 의 금·토 값", "how": "EPC 요금 달력에서 (P) 값을 요일별로 읽는다" }
+  {
+   "item": "패키지 배수 p 의 금·토 값",
+   "how": "EPC 요금 달력에서 (P) 값을 요일별로 읽는다"
+  },
+  {
+   "item": "요금 자동 매칭 설정",
+   "how": "미확인 프로그램은 화면에서 다시 읽는다"
+  }
  ]
 }

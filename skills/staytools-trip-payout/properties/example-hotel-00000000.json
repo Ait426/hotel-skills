@@ -190,10 +190,127 @@
    "source": "호텔 개요"
   }
  ],
+ "summary": [
+  {
+   "label": "수수료 c",
+   "value": "15%",
+   "note": "가상 지불 정보 기준"
+  }
+ ],
+ "programs": [
+  {
+   "name": "TripPlus",
+   "status": "활성",
+   "range": "등급별 할인",
+   "setting": "전 등급 10%",
+   "note": "가상 값",
+   "verified": true
+  },
+  {
+   "name": "CoinPlus",
+   "status": "미등록",
+   "range": null,
+   "setting": null,
+   "note": "소개 화면만 뜸",
+   "verified": true
+  },
+  {
+   "name": "Preferred Partner",
+   "status": "미확인",
+   "range": null,
+   "setting": null,
+   "note": "",
+   "verified": false
+  }
+ ],
+ "content": {
+  "photos": {
+   "total": 120,
+   "lowRes": null,
+   "untagged": null,
+   "note": "가족 분류 0장"
+  },
+  "reviews": {
+   "score": 8.3,
+   "count": 90,
+   "unanswered": null,
+   "detail": {
+    "위치": 8.8,
+    "시설": 7.9,
+    "서비스": 8.4,
+    "청결도": 8.0
+   },
+   "compare": {
+    "위치": 8.2,
+    "시설": 8.1,
+    "서비스": 8.3,
+    "청결도": 8.2
+   }
+  },
+  "mapping": {
+   "mapped": 2,
+   "total": 2,
+   "unmapped": 0,
+   "note": "채널 매니저 연결됨"
+  }
+ },
+ "ratePlans": [
+  {
+   "name": "무료 취소",
+   "id": null,
+   "rooms": 2,
+   "base": "—",
+   "policy": "1일 전 무료 취소",
+   "sold": null,
+   "status": "판매 가능"
+  },
+  {
+   "name": "환불불가",
+   "id": null,
+   "rooms": 2,
+   "base": "무료 취소보다 10% 낮음",
+   "policy": "환불 불가",
+   "sold": null,
+   "status": "판매 가능"
+  }
+ ],
+ "findings": [
+  {
+   "title": "청결도가 항목 중 가장 낮다",
+   "severity": "med",
+   "detail": "청결 언급 리뷰부터 확인한다",
+   "evidence": "리뷰 항목 점수 (가상)",
+   "revised": null
+  }
+ ],
+ "measurements": [
+  {
+   "label": "날짜 A",
+   "condition": "국내 · 데스크탑 · 1박 2인 · 비로그인",
+   "input": 200000,
+   "shown": 160000
+  },
+  {
+   "label": "날짜 B",
+   "condition": "같은 조건",
+   "input": 230000,
+   "shown": 184000
+  },
+  {
+   "label": "날짜 C",
+   "condition": "같은 조건",
+   "input": 260000,
+   "shown": 208000
+  }
+ ],
  "open": [
   {
    "item": "캠페인 + 회원 중복",
    "how": "예약 엑셀 Promotion 칸에서 캠페인이 찍힌 건의 회원 동반 여부를 센다"
+  },
+  {
+   "item": "Preferred Partner 설정",
+   "how": "미확인 프로그램은 화면에서 다시 읽는다"
   }
  ]
 }

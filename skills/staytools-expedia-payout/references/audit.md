@@ -98,3 +98,24 @@
 ```
 
 `status`: `ok` 합격 · `warn` 주의 · `bad` 위험 · `unknown` 못 읽음. 위 값은 형식 예시다.
+
+## 아고다 스킬과 같은 산출물 — 기록 칸
+
+점검이 끝나면 `audit[]` 말고도 아래 칸을 채운다. 콘솔이 「현재 설정 · 발견 사항 · 프로그램 · 콘텐츠 · 요금제 · 노출가 실측」 카드로 낸다. 칸 이름은 아고다 스킬과 같다.
+
+| 칸 | 어디서 읽나 | 무엇을 적나 |
+|---|---|---|
+| `findings` | 아래 영역에서 나온 결론 | 심각도(high·med·info) · 근거 · 정정 |
+| `programs` | 엑셀러레이터 · TravelAds · 요금 자동 매칭 · 노출 순위 화면의 단계별 혜택 | 설정 가능 범위(예: 엑셀러레이터 % 선택지)와 현재 설정을 나눠 적는다 |
+| `content.photos` | 사진 화면 | 전체 장수, 범주별 누락, 저화질 표시 |
+| `content.reviews` | 투숙 후 이용 후기 (`__epcReviewHead`) · 노출 순위의 고객 경험 항목 | 점수, 항목별 점수, 답변 대기 건수 |
+| `content.mapping` | 객실 유형 및 요금제 · 요금 경쟁력의 「누락된 객실 유형」 | 채널 매니저와 연결된 객실 수 / 전체, 누락 객실 |
+| `ratePlans` | 객실 유형 및 요금제 · 취소 정책 화면 | 요금제명 · 객실 수 · 취소 정책 · 상태 |
+| `measurements` | 고객 페이지 객실별 금액 (`__customer`) | 날짜 3개 이상. 입력값은 그날 달력요금 |
+
+- `findings[]` 는 결론이다. `{"title", "severity", "detail", "evidence", "revised"}`. **실측은 `evidence`, 판단은 `detail`** 에 나눠 적는다. 판정이 뒤집히면 `revised` 에 이전 판정과 정정 사유를 남긴다.
+- `programs[]` 는 `{"name", "status", "range", "setting", "note", "verified"}`. 화면에서 못 읽은 범위는 `null` 이다. 일반 구조를 그 숙소 값처럼 적지 마라.
+- `content` 는 `photos{total, lowRes, untagged, note}` · `reviews{score, count, unanswered, detail{}, compare{}, note}` · `mapping{mapped, total, unmapped, note}`. 숫자 칸에 글자를 넣지 않는다.
+- `ratePlans[]` 는 `{"name", "id", "rooms", "base", "policy", "sold", "status"}`. 가격표(요금제 배수·요금)와 다른 것이다. `sold` 가 0이면 `--check` 가 알린다.
+- `measurements[]` 는 `{"label", "condition", "input", "shown", "expected", "tolerance"}`. **날짜 3개 이상**을 재서 화면값 ÷ 입력값 비율이 0.001 안에서 맞으면 공식이 선형으로 확인된 것이다. 조회 조건(국가·기기·박수·인원·로그인)을 `condition` 에 적는다.
+- `summary[]` 는 맨 위 요약 칸 `{"label", "value", "note"}` 이다. 수수료·계수처럼 그 숙소의 핵심 숫자를 넣는다. 적용 중 프로모션 수·발견 사항·점검 건수·하한은 자동으로 붙는다.

@@ -1,5 +1,5 @@
 {
- "_note": "부킹닷컴 조사 결과 → HTML 콘솔 입력 파일. 빈 양식이다. 그 숙소의 값으로 채우고, 모르는 값은 null 로 둔 뒤 open[] 에 확인 방법을 적어라.\ncoef.k 는 실예약 실입금 ÷ 그 예약의 노출가다. 수수료율로 추정했으면 verified.k 를 false 로 둔다. occStep 은 기준 인원보다 1명 적을 때 빼는 폭이다(예: 0.07). floor 는 입금가 하한이고 숙소가 정한 값만 넣는다. 지어내지 마라.\nplans[].mult 는 요금제 배수다. 기준 요금제는 1 이다. rooms[].base 는 기준 인원이고 rates 는 요금세트별 판매가다.\npromotions[].cat: target=타겟 요금, portfolio=포트폴리오형, campaign=캠페인, genius=Genius, focus=집중형 특가.\ntarget 은 pos 를 domestic·international·mobile 중 하나로 적는다. 국적이 아니라 접속 위치다.\nportfolio·campaign·focus 는 cond 를 적는다. base=조건 없음, advance=minDays 일 이상 전, lastMinute=maxDays 일 이내. member 가 true 면 회원 전용이다.\nstatus 가 '적용' 인 것만 계산한다. 일부러 꺼 둔 프로모션은 '종료' 로 둔다.\nledger[] 는 예약 정산 내역의 실측값만 넣는다. shown 은 그 예약의 노출가, payout 은 실입금, nights 는 박수다. 예약번호·투숙객 이름·연락처는 어디에도 적지 마라.\naudit[] 는 숙소 점검 결과다(references/audit.md). area 영역, item 항목, value 화면 값, status 는 ok·warn·bad·unknown, rule 은 화면에 적힌 기준, action 조치, source 읽은 화면. 기준을 지어내지 마라.",
+ "_note": "부킹닷컴 조사 결과 → HTML 콘솔 입력 파일. 빈 양식이다. 그 숙소의 값으로 채우고, 모르는 값은 null 로 둔 뒤 open[] 에 확인 방법을 적어라.\ncoef.k 는 실예약 실입금 ÷ 그 예약의 노출가다. 수수료율로 추정했으면 verified.k 를 false 로 둔다. occStep 은 기준 인원보다 1명 적을 때 빼는 폭이다(예: 0.07). floor 는 입금가 하한이고 숙소가 정한 값만 넣는다. 지어내지 마라.\nplans[].mult 는 요금제 배수다. 기준 요금제는 1 이다. rooms[].base 는 기준 인원이고 rates 는 요금세트별 판매가다.\npromotions[].cat: target=타겟 요금, portfolio=포트폴리오형, campaign=캠페인, genius=Genius, focus=집중형 특가.\ntarget 은 pos 를 domestic·international·mobile 중 하나로 적는다. 국적이 아니라 접속 위치다.\nportfolio·campaign·focus 는 cond 를 적는다. base=조건 없음, advance=minDays 일 이상 전, lastMinute=maxDays 일 이내. member 가 true 면 회원 전용이다.\nstatus 가 '적용' 인 것만 계산한다. 일부러 꺼 둔 프로모션은 '종료' 로 둔다.\nledger[] 는 예약 정산 내역의 실측값만 넣는다. shown 은 그 예약의 노출가, payout 은 실입금, nights 는 박수다. 예약번호·투숙객 이름·연락처는 어디에도 적지 마라.\naudit[] 는 숙소 점검 결과다(references/audit.md). area 영역, item 항목, value 화면 값, status 는 ok·warn·bad·unknown, rule 은 화면에 적힌 기준, action 조치, source 읽은 화면. 기준을 지어내지 마라.\nsummary[]·findings[]·programs[]·content·ratePlans[]·measurements[] 는 아고다 스킬과 같은 기록 칸이다. 쓰는 법은 references/audit.md 「아고다 스킬과 같은 산출물」. 모르는 값은 null, 확인 방법은 open[].",
  "property": {
   "name": "",
   "bookingId": "",
@@ -12,22 +12,112 @@
   "k": null,
   "occStep": null,
   "floor": null,
-  "verified": { "k": false, "occStep": false, "floor": false },
+  "verified": {
+   "k": false,
+   "occStep": false,
+   "floor": false
+  },
   "source": ""
  },
  "plans": [
-  { "name": "기준 요금제", "mult": 1, "verified": false }
+  {
+   "name": "기준 요금제",
+   "mult": 1,
+   "verified": false
+  }
  ],
  "rooms": [
-  { "name": "", "base": 2, "rates": { "WEEK": null, "FRI": null, "SAT": null } }
+  {
+   "name": "",
+   "base": 2,
+   "rates": {
+    "WEEK": null,
+    "FRI": null,
+    "SAT": null
+   }
+  }
  ],
  "promotions": [
-  { "name": "", "cat": "target", "pos": "domestic", "pct": 0, "status": "적용" },
-  { "name": "", "cat": "portfolio", "cond": "base", "pct": 0, "status": "적용" }
+  {
+   "name": "",
+   "cat": "target",
+   "pos": "domestic",
+   "pct": 0,
+   "status": "적용"
+  },
+  {
+   "name": "",
+   "cat": "portfolio",
+   "cond": "base",
+   "pct": 0,
+   "status": "적용"
+  }
  ],
  "ledger": [],
  "audit": [
-  { "area": "", "item": "", "value": "", "status": "unknown", "rule": "", "action": "", "source": "" }
+  {
+   "area": "",
+   "item": "",
+   "value": "",
+   "status": "unknown",
+   "rule": "",
+   "action": "",
+   "source": ""
+  }
  ],
+ "summary": [],
+ "findings": [
+  {
+   "title": "",
+   "severity": "info",
+   "detail": "",
+   "evidence": "",
+   "revised": null
+  }
+ ],
+ "programs": [
+  {
+   "name": "",
+   "status": "",
+   "range": null,
+   "setting": null,
+   "note": "",
+   "verified": false
+  }
+ ],
+ "content": {
+  "photos": {
+   "total": null,
+   "lowRes": null,
+   "untagged": null,
+   "note": ""
+  },
+  "reviews": {
+   "score": null,
+   "count": null,
+   "unanswered": null,
+   "detail": {},
+   "compare": {},
+   "note": ""
+  },
+  "mapping": {
+   "mapped": null,
+   "total": null,
+   "unmapped": null,
+   "note": ""
+  }
+ },
+ "ratePlans": [
+  {
+   "name": "",
+   "id": null,
+   "rooms": null,
+   "base": null,
+   "policy": null,
+   "sold": null,
+   "status": ""
+  }
+ ],
+ "measurements": [],
  "open": []
 }
