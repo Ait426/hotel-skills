@@ -394,44 +394,112 @@ def paged(pages):
 
 
 
-# ── 조합 비교 — 아고다 계산기의 중복 규칙 강제 · 수수료 조합 비교와 같은 기능 ──
+# ── 조합 비교 — 아고다 계산기와 같은 기능 ──
+# 중복 규칙 강제(promoGroups) · 수수료 조합(commissionParts) · 두 방향(목표→요금, 요금→입금가) · 목표 칩 ·
+# 실측 비율 고정 토글(measurements) · 요일별 일괄 표(rooms[].rates) · 금액 분해 막대.
 # promoGroups[].mode: locked(항상 적용) · single(그룹에서 하나만, 라디오) · multi(누적, 체크박스)
 # commissionParts[].kind: base(결제액에서 % 차감) · accel(세전 금액에서 % 차감). options 가 있으면 선택지로 비교한다.
 MODES = ("locked", "single", "multi")
 COMBO_JS = r"""document.addEventListener('DOMContentLoaded',function(){var el=document.getElementById('combo');if(!el)return;
-var D=JSON.parse(document.getElementById('data').textContent),G=D.promoGroups||[],P=D.commissionParts||[],X=COMBO;
-var q=function(s){return el.querySelector(s)},won=function(x){return Math.round(x).toLocaleString('ko-KR')};
+var D=JSON.parse(document.getElementById('data').textContent),G=D.promoGroups||[],P=D.commissionParts||[],X=COMBO,mode='fwd';
+var q=function(s){return el.querySelector(s)},won=function(x){return x==null||!isFinite(x)?'—':Math.round(x).toLocaleString('ko-KR')};
+var unit=X.unit||100,ceilU=function(x){return Math.ceil(+x.toFixed(6)/unit)*unit};
 function esc(s){var e=document.createElement('i');e.textContent=s==null?'':String(s);return e.innerHTML}
 q('#cg').innerHTML=G.map(function(g,gi){return '<fieldset class="cgrp"><legend>'+esc(g.name)+' <small>'+({locked:'항상 적용',single:'하나만',multi:'누적'})[g.mode]+'</small></legend>'+
- (g.items||[]).map(function(it,ii){var id='c'+gi+'_'+ii,t=g.mode==='single'?'radio':'checkbox';
- return '<label class="copt"><input type="'+t+'" name="g'+gi+'" id="'+id+'" data-g="'+gi+'" data-i="'+ii+'"'+(it.on||g.mode==='locked'?' checked':'')+(g.mode==='locked'?' disabled':'')+'> '+esc(it.name)+' <b>'+it.pct+'%</b>'+(it.tag?' <small>'+esc(it.tag)+'</small>':'')+'</label>'}).join('')+
+ (g.items||[]).map(function(it,ii){var t=g.mode==='single'?'radio':'checkbox';
+ return '<label class="copt"><input type="'+t+'" name="g'+gi+'" data-g="'+gi+'" data-i="'+ii+'"'+(it.on||g.mode==='locked'?' checked':'')+(g.mode==='locked'?' disabled':'')+'> '+esc(it.name)+' <b>'+it.pct+'%</b>'+(it.tag?' <small>'+esc(it.tag)+'</small>':'')+'</label>'}).join('')+
  (g.mode==='single'?'<label class="copt"><input type="radio" name="g'+gi+'" data-g="'+gi+'" data-i="-1"'+((g.items||[]).some(function(i){return i.on})?'':' checked')+'> 없음</label>':'')+'</fieldset>'}).join('');
 q('#cp').innerHTML=P.map(function(p,pi){var o=(p.options&&p.options.length?p.options:[p.pct]);
  return '<label class="field">'+esc(p.name)+' ('+(p.kind==='accel'?'세전 차감':'결제액 차감')+')<select data-p="'+pi+'">'+o.map(function(v){return '<option value="'+v+'"'+(v===p.pct?' selected':'')+'>'+v+'%</option>'}).join('')+'</select></label>'}).join('');
-function run(){var rate=+q('#crate').value||0,ds=[];
+q('#cchips').innerHTML=(X.targets||[]).map(function(t){return '<button type="button" class="pgtab" data-t="'+t.v+'">'+esc(t.label)+' '+won(t.v)+'</button>'}).join('');
+if(!X.meas)q('#cmeasw').hidden=true;
+function disc(){if(q('#cmeas').checked&&X.meas)return 1-X.meas;var ds=[];
  G.forEach(function(g,gi){var s=0;el.querySelectorAll('input[data-g="'+gi+'"]').forEach(function(c){var i=+c.dataset.i;if(c.checked&&i>=0)s+=g.items[i].pct});if(s)ds.push(s)});
- var d=X.across==='mult'?1-ds.reduce(function(a,x){return a*(1-x/100)},1):ds.reduce(function(a,x){return a+x},0)/100;
- var base=0,acc=0;el.querySelectorAll('select[data-p]').forEach(function(s){var p=P[+s.dataset.p];if(p.kind==='accel')acc+=+s.value;else base+=+s.value});
- var paid=rate*(1-d),pay=paid*(1-base/100)-paid*acc/100/(X.T||1),fl=X.floor;
- q('#cfig').textContent=won(pay);q('#cline').innerHTML='총 할인 '+(d*100).toFixed(1)+'% · 손님 결제 '+won(paid)+' · 수수료 '+base+'%'+(acc?' + '+acc+'%':'')+
-  (fl==null?' · <span class="tag">하한 미지정</span>':pay>=fl?' · <span class="tag ok">하한 '+won(fl)+' 대비 +'+won(pay-fl)+'</span>':' · <span class="tag bad">하한 '+won(fl)+' 대비 -'+won(fl-pay)+'</span>')}
+ return X.across==='mult'?1-ds.reduce(function(a,x){return a*(1-x/100)},1):ds.reduce(function(a,x){return a+x},0)/100}
+function comm(){var b=0,a=0;el.querySelectorAll('select[data-p]').forEach(function(s){var p=P[+s.dataset.p];if(p.kind==='accel')a+=+s.value;else b+=+s.value});return{b:b,a:a}}
+function factor(d,c){return(1-d)*((1-c.b/100)-c.a/100/(X.T||1))}
+function verdict(pay,goal){var fl=goal!=null?goal:X.floor;return fl==null?'<span class="tag">하한·목표 미지정</span>':pay>=fl?'<span class="tag ok">'+won(fl)+' 대비 +'+won(pay-fl)+'</span>':'<span class="tag bad">'+won(fl)+' 대비 -'+won(fl-pay)+'</span>'}
+function run(){var d=disc(),c=comm(),f=factor(d,c),rate,pay,goal=null;
+ if(mode==='rev'){goal=+q('#ctgt').value||0;rate=f>0?ceilU(goal/f):NaN;pay=rate*f;q('#ccap').textContent='필요 요금 ('+won(unit)+'원 올림)';q('#cfig').textContent=won(rate)}
+ else{rate=+q('#crate').value||0;pay=rate*f;q('#ccap').textContent='입금가 (계산값)';q('#cfig').textContent=won(pay)}
+ var paid=rate*(1-d),cut=rate-pay-(rate-paid);
+ q('#cline').innerHTML='총 할인 '+(d*100).toFixed(1)+'%'+(q('#cmeas').checked&&X.meas?' (실측 고정)':'')+' · 손님 결제 '+won(paid)+' · 입금 '+won(pay)+' · 수수료 '+c.b+'%'+(c.a?' + '+c.a+'%':'')+' · '+verdict(pay,goal);
+ var tot=rate>0?rate:1,w=function(x){return Math.max(0,x/tot*100).toFixed(1)+'%'};
+ q('#cbar').innerHTML='<span style="width:'+w(rate-paid)+';background:var(--accent-soft)" title="할인"></span><span style="width:'+w(cut)+';background:var(--bad-soft)" title="수수료"></span><span style="width:'+w(pay)+';background:var(--ok-soft)" title="입금"></span>';
+ q('#clegend').textContent='할인 '+won(rate-paid)+' · 수수료 '+won(cut)+' · 입금 '+won(pay);
+ var rows=[],tg=mode==='rev'?goal:null;(D.rooms||[]).forEach(function(r){Object.keys(r.rates||{}).forEach(function(k){var v=r.rates[k];if(typeof v!=='number')return;var p=v*f;
+  rows.push('<tr><td class="l">'+esc(r.name)+'</td><td>'+esc(k)+'</td><td>'+won(v)+'</td><td><b>'+won(p)+'</b></td><td>'+(tg?won(ceilU(tg/f)):'—')+'</td><td>'+verdict(p,tg)+'</td></tr>')})});
+ q('#cweek').innerHTML=rows.join('');q('#cweekw').hidden=!rows.length}
+q('#cfwd').onclick=function(){mode='fwd';this.setAttribute('aria-pressed','true');q('#crev').setAttribute('aria-pressed','false');q('#cratew').hidden=false;q('#ctgtw').hidden=true;run()};
+q('#crev').onclick=function(){mode='rev';this.setAttribute('aria-pressed','true');q('#cfwd').setAttribute('aria-pressed','false');q('#cratew').hidden=true;q('#ctgtw').hidden=false;run()};
+q('#cchips').onclick=function(e){var t=e.target.closest('[data-t]');if(!t)return;q('#ctgt').value=t.dataset.t;q('#crev').onclick.call(q('#crev'))};
 el.addEventListener('input',run);el.addEventListener('change',run);run()});"""
 CSS += """.cgrp{border:1px solid var(--line);border-radius:7px;margin:0 0 10px;padding:8px 12px}.cgrp legend{font-weight:700;font-size:13px}
 .copt{display:block;padding:3px 0;font-size:14px}.copt input{margin-right:6px}
+.cbar{display:flex;height:12px;border-radius:6px;overflow:hidden;background:var(--sunk);margin:10px 0 4px}.cbar span{display:block;height:100%}
 """
+
+
+def combo_targets(d):
+    """목표 칩. targets[].payout(또는 v) · property.targets[].v · cmsPresets 를 모은다. null 은 뺀다."""
+    out = []
+    for t in (d.get("targets") or []) + ((d.get("property") or {}).get("targets") or []):
+        v = t.get("payout", t.get("v"))
+        if isinstance(v, (int, float)):
+            out.append({"label": " ".join(str(x) for x in (t.get("room"), t.get("set"), t.get("label")) if x) or "목표", "v": v})
+    return out
+
+
+def measured_ratio(d):
+    rs = [r for _, r in measure_points(d) if r is not None]
+    return sum(rs) / len(rs) if rs else None
 
 
 def combo_card(d, across, T=1, floor=None, rate=None):
     """promoGroups·commissionParts 가 있을 때만 나온다. 켤 수 없는 조합은 UI가 애초에 못 만든다."""
     if not d.get("promoGroups") and not d.get("commissionParts"):
         return ""
-    cfg = json.dumps({"across": across, "T": T, "floor": floor}, ensure_ascii=False)
-    body = (f'<div class="cols"><div><label class="field">입력 요금 (달력·판매가)<input id="crate" type="number" min="0" step="100" value="{rate or 0}"></label>'
+    unit = (d.get("property") or {}).get("roundUnit") or 100
+    cfg = json.dumps({"across": across, "T": T, "floor": floor, "unit": unit, "targets": combo_targets(d),
+                      "meas": measured_ratio(d)}, ensure_ascii=False)
+    body = ('<div class="pgnav"><button type="button" class="pgtab" id="cfwd" aria-pressed="true">요금 → 입금가</button>'
+            '<button type="button" class="pgtab" id="crev" aria-pressed="false">목표 입금가 → 요금</button></div>'
+            '<div class="cols"><div>'
+            f'<label class="field" id="cratew">입력 요금 (달력·판매가)<input id="crate" type="number" min="0" step="100" value="{rate or 0}"></label>'
+            '<label class="field" id="ctgtw" hidden>목표 입금가<input id="ctgt" type="number" min="0" step="100" value="0"></label>'
+            '<div class="pgnav" id="cchips"></div>'
+            '<label class="copt" id="cmeasw"><input type="checkbox" id="cmeas"> 실측 비율로 할인 고정 (노출가 실측 평균)</label>'
             '<div id="cg"></div><div class="row2" id="cp"></div></div>'
-            '<div><small>입금가 (조합 계산값)</small><div class="fig" id="cfig">—</div><p class="note" id="cline"></p>'
-            f'<p class="note">그룹 안 「하나만」은 라디오라 두 개를 동시에 켤 수 없다. 그룹끼리는 {"곱해서" if across == "mult" else "더해서"} 합친다. 수수료 선택지를 바꿔 조합을 비교한다.</p></div></div>')
-    return (f'<section class="card" id="combo"><h2>조합 비교 (중복 규칙 · 수수료)</h2><div class="body">{body}</div></section>'
+            '<div><small id="ccap">입금가 (계산값)</small><div class="fig" id="cfig">—</div><p class="note" id="cline"></p>'
+            '<div class="cbar" id="cbar"></div><p class="note" id="clegend"></p>'
+            f'<p class="note">그룹 안 「하나만」은 라디오라 두 개를 동시에 켤 수 없다. 그룹끼리는 {"곱해서" if across == "mult" else "더해서"} 합친다. 수수료 선택지를 바꿔 조합을 비교한다.</p></div></div>'
+            '<div id="cweekw"><h3 style="font-size:13px;color:var(--dim)">요일·요금세트별 일괄 (위 조합 기준)</h3>'
+            '<div class="scroll"><table><thead><tr><th>객실</th><th>세트</th><th>요금</th><th>입금가</th><th>목표용 요금</th><th>판정</th></tr></thead>'
+            '<tbody id="cweek"></tbody></table></div></div>')
+    return (f'<section class="card" id="combo"><h2>조합 비교 (중복 규칙 · 수수료 · 역산)</h2><div class="body">{body}</div></section>'
             f'<script>var COMBO={cfg};</script>')
+
+
+def channels_card(d):
+    """채널별 요금 비교. 같은 객실을 채널마다 얼마에 보내는지. 기준 채널 대비 비율을 붙인다."""
+    ch = d.get("channels") or []
+    if not ch:
+        return ""
+    sets = []
+    for c in ch:
+        for k in c.get("rates") or {}:
+            if k not in sets:
+                sets.append(k)
+    base = next((c for c in ch if c.get("base")), ch[0])
+    bv = (base.get("rates") or {}).get(sets[0]) if sets else None
+    rows = []
+    for c in ch:
+        v = (c.get("rates") or {}).get(sets[0]) if sets else None
+        ratio = f"{v / bv * 100:.0f}%" if v and bv else "—"
+        rows.append(f'<tr><td class="l">{esc(c.get("name"))}</td>' + "".join(f'<td>{dash((c.get("rates") or {}).get(s))}</td>' for s in sets)
+                    + f'<td>{ratio}</td></tr>')
+    return card("채널별 요금", f'<div class="body">{table(["채널"] + [esc(s) for s in sets] + [esc(base.get("name")) + " 대비"], rows)}'
+                '<p class="note">수수료 구조가 달라 차이는 정상이지만 폭은 알고 있어야 한다. 채널 매니저나 각 OTA 달력에서 읽은 값만 넣는다.</p></div>')
 
 
 def combo_script(d):
@@ -469,7 +537,7 @@ def render(d):
     data = json.dumps(payload, ensure_ascii=False).replace("</", "<\\/")
     parts = [paged([("현재 설정", [summary_tiles(d), findings_card(d), audit_card(d), programs_card(d), content_card(d), plans_card(d), promo_card(d), open_card(d)]),
                     ("계산기", [coef_card(d), calc_card(), combo_card(d, "add", (d.get("coef") or {}).get("T") or 1, (d.get("property") or {}).get("floor"), next((v for r in d.get("rooms") or [] for v in (r.get("rates") or {}).values() if isinstance(v, (int, float))), None))]),
-                    ("요금표", [lead_card()]),
+                    ("요금표", [channels_card(d), lead_card()]),
                     ("실측 기록", [measure_card(d), ledger_card(d)])]), combo_script(d)]
     title = esc(p.get("name") or "숙소")
     return f"""<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">

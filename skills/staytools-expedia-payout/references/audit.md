@@ -120,4 +120,6 @@
 - `measurements[]` 는 `{"label", "condition", "input", "shown", "expected", "tolerance"}`. **날짜 3개 이상**을 재서 화면값 ÷ 입력값 비율이 0.001 안에서 맞으면 공식이 선형으로 확인된 것이다. 조회 조건(국가·기기·박수·인원·로그인)을 `condition` 에 적는다.
 - `promoGroups[]` 는 **중복 규칙을 계산기에 넣는 칸**이다(아고다 `promotions.groups` 와 같은 역할). `{"name", "mode", "items": [{"name", "pct", "on", "tag"}]}`. `mode` 는 `locked`(항상 적용) · `single`(그룹에서 하나만, 라디오) · `multi`(누적, 체크박스). 켤 수 없는 조합을 계산기가 애초에 못 만들게 이 스킬의 `pricing.md` 중복 규칙대로 그룹을 짠다. 하나만 붙는 그룹에 실제로 2개가 켜져 있으면 `on` 은 하나에만 주고 나머지는 `tag` 에 「적용 중」을 적는다.
 - `commissionParts[]` 는 **수수료 조합 비교 칸**이다(아고다 `commission.parts` 와 같은 역할). `{"name", "kind", "pct", "options"}`. `kind` 는 `base`(손님 결제액에서 차감) · `accel`(세전 금액에서 차감). `options` 에 화면의 선택지를 넣으면 드롭다운으로 바꿔 가며 입금가를 비교한다. **pct 를 모르면 null 대신 항목을 뺀다.** 광고비처럼 입금가 공식 밖의 비용은 넣지 않는다.
+- `channels[]` 는 채널별 요금 비교다. `{"name", "base", "rates": {세트: 요금}}`. 채널 매니저나 각 OTA 달력에서 읽은 값만 넣는다. 다른 OTA 화면의 손님가(가격 비교 도구 값)는 넣지 않고 `audit[]` 에 적는다.
+- `measurements[].shown` 은 **손님 결제액**이다. 계산기의 「실측 비율로 할인 고정」이 화면값 ÷ 입력값 평균을 (1 − 할인)으로 쓴다.
 - `summary[]` 는 맨 위 요약 칸 `{"label", "value", "note"}` 이다. 수수료·계수처럼 그 숙소의 핵심 숫자를 넣는다. 적용 중 프로모션 수·발견 사항·점검 건수·하한은 자동으로 붙는다.

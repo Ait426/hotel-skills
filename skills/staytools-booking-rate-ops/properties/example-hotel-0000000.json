@@ -6,7 +6,13 @@
   "slug": "sample-stay",
   "surveyedAt": "2026-01-02",
   "channelManager": "WINGSCMS 계열",
-  "roundUnit": 100
+  "roundUnit": 100,
+  "targets": [
+   {
+    "label": "평일 목표",
+    "v": 95000
+   }
+  ]
  },
  "coef": {
   "k": 0.82,
@@ -345,6 +351,30 @@
     3,
     5
    ]
+  }
+ ],
+ "channels": [
+  {
+   "name": "이 채널",
+   "base": true,
+   "rates": {
+    "WEEK": 200000,
+    "SAT": 260000
+   }
+  },
+  {
+   "name": "다른 채널 A",
+   "rates": {
+    "WEEK": 180000,
+    "SAT": 240000
+   }
+  },
+  {
+   "name": "다른 채널 B",
+   "rates": {
+    "WEEK": 150000,
+    "SAT": 210000
+   }
   }
  ],
  "open": [
