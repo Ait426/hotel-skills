@@ -1,0 +1,54 @@
+{
+ "_안내": "숙소 프로필. rooms 는 판매 가능한 객실 타입별 실수(PMS 객실 타입 값과 똑같이). ota 의 키는 매핑 pms.channels 의 channel 이름과 같아야 한다. property 는 이 파일 기준 상대 경로 또는 절대 경로. rate·floor 를 적으면 property.json 값보다 먼저 쓴다. 모르는 값은 비워 두고 지어내지 않는다.",
+ "hotel": "예시 호텔",
+ "rooms": {
+  "스탠다드": 20,
+  "디럭스": 10,
+  "패밀리": 5
+ },
+ "ota": {
+  "부킹닷컴": {
+   "kind": "booking",
+   "property": "example/ota-booking.example.json",
+   "rate": null,
+   "floor": null
+  },
+  "익스피디아": {
+   "kind": "expedia",
+   "property": "example/ota-expedia.example.json",
+   "rate": null,
+   "floor": null
+  },
+  "트립닷컴": {
+   "kind": "trip",
+   "property": "example/ota-trip.example.json",
+   "rate": null,
+   "floor": null
+  },
+  "아고다": {
+   "kind": "agoda",
+   "property": "example/ota-agoda.example.json",
+   "rate": null,
+   "floor": null
+  },
+  "야놀자 호텔": {
+   "kind": "domestic"
+  },
+  "여기어때 호텔": {
+   "kind": "domestic"
+  }
+ },
+ "thresholds": {
+  "min_n": 20,
+  "full_occ": 0.8,
+  "empty_occ": 0.6,
+  "short_lead_share": 0.5,
+  "long_lead_share": 0.2,
+  "long_stay_share": 0.12,
+  "cancel_rate": 0.2,
+  "nat_share": 0.3,
+  "family_share": 0.2,
+  "dayuse_share": 0.3,
+  "step_pct": 5
+ }
+}

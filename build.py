@@ -30,6 +30,7 @@ SKILLS = {
     "staytools-trip-payout": "요금·입금가",
     "staytools-ota-payout-floor-design": "요금·입금가",
     "staytools-sales-analysis": "매출 분석",
+    "staytools-guest-mix": "매출 분석",
     "staytools-ota-inventory-audit": "재고·운영",
     "staytools-hotel-cleaning-assignment-manager": "재고·운영",
     "staytools-product-planning": "기획",
@@ -88,6 +89,16 @@ REQUIREMENTS = {
             "YFlux 내보내기로만 실제 검증했습니다. 다른 PMS는 열 매핑을 직접 맞춰야 하고 미검증으로 표시됩니다.",
             "수수료·쿠폰·부가세는 표시용이며 실수령 계산에 쓰지 않습니다.",
             "고객명·연락처가 든 원본 파일은 공유하지 마세요.",
+        ],
+    },
+    "staytools-guest-mix": {
+        "target": "OTA 여러 곳에 판매하고 PMS 예약 내보내기가 있는 숙소",
+        "systems": ["PMS 예약 내보내기 (xlsx·csv)", "Python (pandas, openpyxl)", "(선택) OTA 스킬의 property.json·채널 예약 파일"],
+        "notes": [
+            "추천만 하고 OTA 설정은 바꾸지 않습니다. 적용 전에 각 OTA 콘솔에서 다시 확인하세요.",
+            "입금가 검산은 대표 판매가 하나로 합니다. property.json이 없는 채널은 \"확인 필요\"로 남습니다.",
+            "YFlux 내보내기로만 실제 대조했습니다. 다른 PMS·채널 파일은 열 매핑을 맞춰야 하고 미검증입니다.",
+            "예약번호·이름·연락처 열은 매핑하면 멈춥니다. 원본 파일은 공유하지 마세요.",
         ],
     },
     "staytools-ota-inventory-audit": {

@@ -1,0 +1,60 @@
+{
+ "_note": "가상 숙소 예시. 실제 값은 해당 OTA 스킬(staytools-*-payout, booking-rate-ops, agoda-audit)의 property.json 을 그대로 쓴다.",
+ "property": {
+  "name": "예시 호텔",
+  "floor": 60000
+ },
+ "weekly": [
+  {
+   "d": "월~목",
+   "set": "WEEK",
+   "cms": 100000
+  }
+ ],
+ "commission": {
+  "parts": [
+   {
+    "id": "contract",
+    "name": "계약 수수료",
+    "pct": 17,
+    "on": true
+   }
+  ]
+ },
+ "promotions": {
+  "groups": [
+   {
+    "key": "core",
+    "name": "프로그램",
+    "mode": "locked",
+    "items": [
+     {
+      "id": "mg",
+      "nm": "Maximum Gain",
+      "pct": 10,
+      "on": true
+     }
+    ]
+   },
+   {
+    "key": "save",
+    "name": "알뜰",
+    "mode": "multi",
+    "items": [
+     {
+      "id": "eb",
+      "nm": "얼리버드",
+      "pct": 10,
+      "on": true
+     },
+     {
+      "id": "lm",
+      "nm": "마감 임박",
+      "pct": 10,
+      "on": false
+     }
+    ]
+   }
+  ]
+ }
+}

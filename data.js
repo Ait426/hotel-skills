@@ -243,6 +243,52 @@ window.SKILLS = [
   "zipSize": 45976
  },
  {
+  "name": "staytools-guest-mix",
+  "slug": "staytools-guest-mix",
+  "category": "매출 분석",
+  "target": "OTA 여러 곳에 판매하고 PMS 예약 내보내기가 있는 숙소",
+  "systems": [
+   "PMS 예약 내보내기 (xlsx·csv)",
+   "Python (pandas, openpyxl)",
+   "(선택) OTA 스킬의 property.json·채널 예약 파일"
+  ],
+  "notes": [
+   "추천만 하고 OTA 설정은 바꾸지 않습니다. 적용 전에 각 OTA 콘솔에서 다시 확인하세요.",
+   "입금가 검산은 대표 판매가 하나로 합니다. property.json이 없는 채널은 \"확인 필요\"로 남습니다.",
+   "YFlux 내보내기로만 실제 대조했습니다. 다른 PMS·채널 파일은 열 매핑을 맞춰야 하고 미검증입니다.",
+   "예약번호·이름·연락처 열은 매핑하면 멈춥니다. 원본 파일은 공유하지 마세요."
+  ],
+  "inputs": [
+   "PMS 예약 내보내기(xlsx 또는 csv). 거래처·체크인·체크아웃·예약 생성일·예약 상태·금액 열 필요",
+   "객실 타입별 판매 가능 객실 수",
+   "(선택) OTA별 property.json: agoda-audit·booking-rate-ops·expedia-payout·trip-payout 스킬이 만든 파일. 할인 검산에 씀",
+   "(선택) 채널 예약 파일: 트립 주문(국적·요금제), 부킹 예약(인원), 국내 OTA 예약내역(대실·회원등급·쿠폰)",
+   "(선택) 입금가 하한과 대표 판매가: property.json 에 없을 때"
+  ],
+  "description": "예약 데이터로 우리 숙소에 어떤 손님이 많은지 나누고(채널·예약 시점·박수·요일·객실·인원·요금제·국적·취소), 비는 날과 꽉 찬 날을 찾아, 그 손님에게 맞는 OTA 설정(막판 할인·얼리버드·연박·국가 타깃·할인 축소·환불불가)을 추천하는 도구. 추천마다 각 OTA property.json으로 입금가 하한을 검산한다. 판단 지표는 RevPAR. '어떤 손님이 많아', '손님 분석', '객실을 어떻게 채우지', '매출을 올리면서 채우기', 'OTA 설정 뭘 바꿔', '비는 요일', '점유율', 'RevPAR', '세그먼트', '리드타임별로 할인', '국적별 프로모션' 이야기가 나오면 반드시 이 스킬을 먼저 읽어라.",
+  "body": "# 손님 유형 → OTA 설정\n\n**이 배포본에는 특정 숙소의 값이 없다.** 객실 수, 채널 이름, OTA 할인·수수료·하한은 전부 프로필과 매핑에서 온다.\n\n목적은 한정된 객실로 **매출과 점유율을 같이 올리는 것**이다. 판단은 RevPAR(판매 가능 객실 1실당 매출)로 한다.\n- 비는 날은 그 날에 실제로 예약하는 손님 유형에 맞춰 할인을 연다.\n- 꽉 찬 날은 할인을 줄인다.\n- 할인 추천은 반드시 입금가 하한 검산을 거친다.\n\n## 흐름\n\n1. **입력 확인**: PMS 예약 내보내기 1개가 필수다. 아래는 있으면 더 쓴다.\n   - 트립 주문(국적·요금제)\n   - 부킹 예약(인원)\n   - 국내 OTA 예약내역(대실·회원등급·쿠폰)\n2. **프로필**: `assets/profile.example.json` 을 복사해 채운다.\n   - `rooms`: 객실 타입별 실수\n   - `ota`: 채널별 property.json 경로\n   - 모르는 값은 비워 둔다. **지어내지 않는다.**\n3. **매핑**: `scripts/mapping-template.json` 을 복사한다.\n   - 내 파일의 **열 이름만** 보고 맞춘다. 값이 든 행은 대화에 옮기지 않는다.\n   - YFlux 예약 통합 검색 내보내기는 pms 열 이름이 양식과 같다.\n4. **실행**: 아래 「실행」 절의 명령을 돌린다.\n   - 채널 파일 건수가 적으면 `--extra-start` 로 채널 파일만 더 긴 기간(예: 최근 12개월)을 본다.\n5. **결과 대조**: 채널별 건수·매출·취소율을 PMS 보고서나 staytools-sales-analysis 결과와 먼저 맞춘다. 맞지 않으면 추천을 보여 주지 않는다.\n6. **보고**: `report.html` 의 「채널별 할 일」을 짧게 요약한다.\n   - 할인 추천은 각 OTA 콘솔(agoda-audit, booking-rate-ops, expedia-payout, trip-payout)에서 값을 넣어 다시 확인하라고 안내한다.\n   - 적용은 사용자가 직접 한다.\n\n## 실행\n\n```\npython scripts/segment_report.py --pms 예약.xlsx --mapping mapping.json --profile profile.json --out-dir 결과 --month YYYY-MM --extra 트립닷컴=trip.csv --extra 부킹닷컴=booking.csv\n```\n\n## OTA property.json\n\n각 OTA 스킬이 만든 property.json 을 그대로 쓴다(`promoGroups`, `commissionParts`, `rooms[].rates`, `property.floor`/`coef.floor`).\n아고다는 `promotions.groups`, `commission.parts`, `weekly[].cms` 를 읽는다.\nproperty.json 이 없거나 비어 있는 채널은 「확인 필요」로 남긴다. 그 채널의 할인율을 추측해서 채우지 않는다.\n\n## 손님 유형 축\n\n- **PMS**: 채널, 예약 시점(당일/1~3/4~7/8~30/31일+), 박수(대실/1/2/3~6/7+), 체크인 요일, 객실 타입, 인원(1/2/3인+), 요금 유형, 취소율\n- **교차**: 채널×예약 시점, 채널×박수, 채널×요일. 기간에 여러 달이 있으면 월별 추이도 낸다.\n- **채널 파일**: 국적, 요금제, 식사, 프로모션, 인원, 회원등급, 쿠폰, 국적×요금제\n- **점유율**: 날짜×객실 타입별 판매 객실박 ÷ 실수. 대실은 뺀다.\n\n규칙과 검산 공식은 `references/rules.md` 에 있다.\n\n## 해석 주의\n\n- PMS 체크인이 실제 입실 시각인 PMS(자정 넘어 입실)는 요일·리드타임이 하루씩 밀릴 수 있다. staytools-sales-analysis 의 예정일 보정 설명을 참고한다.\n- 국적은 채널 파일(트립 등)에만 있다. 국적 열이 이름에서 추정한 값이면 \"추정\"이라고 밝힌다.\n- 표본이 `min_n` 미만이면 \"표본 적음\"으로 표시하고 결론을 내지 않는다.\n- 검산은 대표 판매가 하나로 한다. 요일·객실별 판매가가 다르면 OTA 콘솔의 요일별 일괄 표로 다시 본다.\n- 추천은 과거 예약 분포에서 나온 제안이다. 효과는 적용 뒤 같은 기간을 다시 돌려 비교한다.\n\n## 개인정보\n\n- 예약번호·확정번호·이름·연락처·이메일 열은 매핑하지 않는다. 매핑하면 스크립트가 멈춘다.\n- 매핑하지 않은 열은 읽자마자 버린다.\n- 결과 파일에는 예약번호와 이름이 없다. 그래도 실제 숙소 결과는 외부에 올리지 않는다.\n- 로그인과 화면 조작은 하지 않는다. 사용자가 내려받은 파일만 읽는다.",
+  "guide": "# 사용 안내 — staytools-guest-mix\n\n예약 데이터로 손님 유형을 나누고, 비는 날·꽉 찬 날을 찾아, 손님에게 맞는 OTA 설정을 추천합니다. 버전 1.0.0.\n추천마다 각 OTA의 입금가 하한을 지키는지 검산합니다.\n\n이 배포본에는 특정 숙소의 값이 없습니다. 예시 파일은 전부 가상 숙소입니다.\n**자기 숙소의 객실 수와 OTA 설정값을 넣어 쓰세요.**\n\n## 설치\n\n- **Claude (Cowork·채팅)**: 사용자 지정 → 스킬 → 추가 → 스킬 업로드에서 이 ZIP을 선택합니다.\n  새 작업에서 `/staytools-guest-mix` 를 고르거나 \"staytools-guest-mix 스킬로 …\"라고 요청합니다.\n- **Claude Code**: 압축을 풀어 나온 폴더를 프로젝트의 `.claude/skills/` (또는 `~/.claude/skills/`) 아래에 넣습니다.\n\n## 준비할 입력\n\n- PMS 예약 내보내기(xlsx 또는 csv). 거래처·체크인·체크아웃·예약 생성일·예약 상태·금액 열 필요\n- 객실 타입별 판매 가능 객실 수\n- (선택) OTA별 property.json: agoda-audit·booking-rate-ops·expedia-payout·trip-payout 스킬이 만든 파일. 할인 검산에 씀\n- (선택) 채널 예약 파일: 트립 주문(국적·요금제), 부킹 예약(인원), 국내 OTA 예약내역(대실·회원등급·쿠폰)\n- (선택) 입금가 하한과 대표 판매가: property.json 에 없을 때\n\n빠진 값은 \"확인 필요\"로 표시합니다. 임의로 채우지 않습니다.\n\n## 실행\n\n```\npython scripts/segment_report.py --pms 예약.xlsx --mapping mapping.json --profile profile.json --out-dir 결과 --month YYYY-MM --extra 트립닷컴=trip.csv\n```\n\n가상 예시로 먼저 돌려 보려면 스킬 폴더에서 아래를 실행합니다.\n\n```\npython scripts/segment_report.py --pms assets/example/pms_example.csv --mapping scripts/mapping-template.json --profile assets/profile.example.json --out-dir 예시결과 --month 2026-03 --extra 트립닷컴=assets/example/trip_example.csv\n```\n\n필요한 패키지는 `pandas` 입니다. xlsx 를 읽으려면 `openpyxl` 도 필요합니다(`pip install pandas openpyxl`).\nPython 3.14, pandas 3.0 에서 실행을 확인했습니다.\n\n## 결과\n\n- `report.html` — 탭 3개\n  - 손님 분포: 유형별 건수·비중·매출·1박 평균·취소율, 채널 교차표\n  - 빈 객실: 요일·객실 타입별 점유율, RevPAR\n  - 채널별 할 일: 추천, 지금 설정, 할인 전후 입금가, 하한 판정\n- `segments.json` — 같은 내용의 데이터\n\n채널 파일은 표본이 적으면 `--extra-start YYYY-MM-DD` 로 더 긴 기간을 봅니다(끝은 분석 기간 끝과 같음). 국적처럼 건수가 적은 축에 씁니다.\n\n## 들어 있는 파일\n\n- `SKILL.md` — 흐름 · 해석 주의 · 개인정보 규칙\n- `references/rules.md` — 추천 규칙표와 입금가 검산 공식\n- `scripts/segment_report.py` — 분석 스크립트\n- `scripts/mapping-template.json` — 열 매핑 양식 (PMS·트립·부킹·국내 OTA)\n- `assets/profile.example.json` — 숙소 프로필 양식 (객실 수·OTA 경로·기준값)\n- `assets/example/` — 가상 숙소 예약 예시와 OTA property 예시\n- `hotel-profile.example.md` — 프로필에 넣을 값 체크리스트\n\n## 범위와 주의\n\n- 가상 데이터로 집계·점유율·입금가를 손으로 검산했습니다. 한 숙소의 실제 YFlux 내보내기로 채널별 유효 예약 건수·취소율을 매출분석(PMS 화면 기준) 결과와 대조해 일치를 확인했습니다. 규칙에 없는 거래처를 묶는 방식이 달라 기업·기관 건수만 다릅니다. **다른 PMS와 채널 파일 형식은 미검증입니다.**\n- 추천은 과거 예약 분포에서 나온 제안입니다. 예약이 얼마나 늘지는 예측하지 않습니다.\n- 입금가 검산은 대표 판매가 하나로 합니다. 요일·객실별 요금은 각 OTA 콘솔에서 다시 확인하세요.\n- 설정을 바꾸지 않습니다. 적용은 각 OTA 화면에서 직접 하세요.\n- 예약번호·이름·연락처 열은 매핑하지 마세요. 매핑하면 스크립트가 멈춥니다. 결과 파일에도 들어가지 않습니다.\n- 기기(모바일/PC) 정보는 다루지 않습니다. 국적은 채널 파일에 있을 때만 나옵니다.",
+  "files": [
+   "assets/example/ota-agoda.example.json",
+   "assets/example/ota-booking.example.json",
+   "assets/example/ota-expedia.example.json",
+   "assets/example/ota-trip.example.json",
+   "assets/example/pms_example.csv",
+   "assets/example/trip_example.csv",
+   "assets/profile.example.json",
+   "hotel-profile.example.md",
+   "references/rules.md",
+   "scripts/mapping-template.json",
+   "scripts/segment_report.py",
+   "SKILL.md",
+   "사용 안내.md"
+  ],
+  "lines": 64,
+  "updated": "2026-11-08",
+  "zip": "downloads/staytools-guest-mix.zip",
+  "zipSize": 41285
+ },
+ {
   "name": "staytools-ota-inventory-audit",
   "slug": "staytools-ota-inventory-audit",
   "category": "재고·운영",

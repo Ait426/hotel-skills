@@ -1,0 +1,60 @@
+{
+ "_note": "가상 숙소 예시. 실제 값은 해당 OTA 스킬(staytools-*-payout, booking-rate-ops, agoda-audit)의 property.json 을 그대로 쓴다.",
+ "property": {
+  "name": "예시 호텔",
+  "floor": 60000
+ },
+ "rooms": [
+  {
+   "name": "스탠다드",
+   "rates": {
+    "평일": 100000
+   }
+  }
+ ],
+ "promotions": [
+  {
+   "name": "국가 배너",
+   "type": "campaign",
+   "pct": 10,
+   "countries": "한국",
+   "status": "적용"
+  }
+ ],
+ "promoGroups": [
+  {
+   "name": "캠페인",
+   "mode": "single",
+   "items": [
+    {
+     "name": "국가 배너(한국)",
+     "pct": 10,
+     "on": true
+    }
+   ]
+  },
+  {
+   "name": "일반",
+   "mode": "multi",
+   "items": [
+    {
+     "name": "조기 예약",
+     "pct": 5,
+     "on": true
+    },
+    {
+     "name": "연박 할인",
+     "pct": 5,
+     "on": false
+    }
+   ]
+  }
+ ],
+ "commissionParts": [
+  {
+   "name": "기본 수수료",
+   "kind": "base",
+   "pct": 15
+  }
+ ]
+}
