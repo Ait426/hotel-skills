@@ -284,9 +284,9 @@ window.SKILLS = [
    "사용 안내.md"
   ],
   "lines": 64,
-  "updated": "2026-11-08",
+  "updated": "2026-11-09",
   "zip": "downloads/staytools-guest-mix.zip",
-  "zipSize": 41285
+  "zipSize": 42276
  },
  {
   "name": "staytools-ota-inventory-audit",

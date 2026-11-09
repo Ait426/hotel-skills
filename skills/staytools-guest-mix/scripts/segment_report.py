@@ -28,10 +28,11 @@ EXTRA_COLS = ['체크인', '체크아웃', '이용 기간', '예약일', '상태
 WD = ['월', '화', '수', '목', '금', '토', '일']
 LB = ['당일', '1~3일', '4~7일', '8~30일', '31일+']
 LOS = ['대실', '1박', '2박', '3~6박', '7박+']
+NAT_SKIP = re.compile(r'^\((없음|모름)\)$|기타|other|unknown|미상', re.I)
 DEFAULT_TH = {'min_n': 20, 'full_occ': 0.9, 'empty_occ': 0.6, 'short_lead_share': 0.5, 'long_lead_share': 0.2,
               'long_stay_share': 0.12, 'cancel_rate': 0.2, 'nat_share': 0.3, 'family_share': 0.2, 'dayuse_share': 0.3, 'step_pct': 5}
 # 추천 규칙이 찾는 프로모션 이름 (property.json promoGroups 항목 이름)
-KW = {'last': r'마감|당일|라스트|막판|last|same.?day|모바일|mobile',
+KW = {'last': r'마감|당일|라스트|막판|last|same.?day|late',   # 모바일 요금은 접속 기기 타깃이라 막판 할인으로 보지 않는다
       'early': r'얼리|조기|사전|early|advance',
       'los': r'연박|장기|주간|위클리|long|los|weekly|multi.?night',
       'country': r'국가|타깃|타겟|지역|country|target|international'}
@@ -101,6 +102,8 @@ def read_table(path, sec, label):
 def to_dt(s):
     """날짜 열: 'YYYY-MM-DD', 'YYYY년 M월 D일 HH:MM', 'YYYY-MM-DDTHH:MM' 모두 받는다."""
     s = s.astype(str).str.replace(r'\s*년\s*|\s*월\s*', '-', regex=True).str.replace(r'\s*일', '', regex=True)
+    # '2026.10.01' · '2026/10/01' · '2026. 10. 01.' 도 '2026-10-01' 로 맞춘다
+    s = s.str.replace(r'(\d{4})\s*[./]\s*(\d{1,2})\s*[./]\s*(\d{1,2})\.?', r'\1-\2-\3', regex=True)
     # 뒤에 붙은 글자(예: '<미리예약고객>')는 버리고 날짜·시각만 꺼낸다
     s = s.str.extract(r'(\d{4}-\d{1,2}-\d{1,2}(?:[ T]\d{1,2}:\d{2}(?::\d{2})?)?)', expand=False)
     return pd.to_datetime(s.str.replace('T', ' ', regex=False), errors='coerce', format='mixed')
@@ -117,17 +120,17 @@ def num(x):
 
 def find_channel(acc, rules, unmatched=None):
     """거래처 -> 채널 (정확히 같은 이름 먼저, 그다음 포함). sales_report.find_rule 과 같은 순서.
-    규칙에 없는 거래처는 unmatched(예: '기업·기관')로 묶고, 없으면 거래처 이름 그대로 쓴다."""
+    규칙에 없는 거래처는 unmatched(기본 '기타 거래처')로 묶는다. 거래처 이름은 개인 이름일 수 있어 결과에 쓰지 않는다."""
     for r in rules:
         if acc in (r.get('match') or []):
             return r['channel'], r.get('group', '')
     for r in rules:
         if any(k and k in str(acc) for k in (r.get('contains') or [])):
             return r['channel'], r.get('group', '')
-    return (unmatched or acc or '(미지정)'), '미분류'
+    return (unmatched or '기타 거래처'), '미분류'
 
 
-def add_dims(df, stay, cancel, with_party=False):
+def add_dims(df, stay, cancel):
     """공통 파생 열: 취소·리드타임·박수·요일."""
     df['_can'] = cancel
     df['_stay'] = stay
@@ -166,19 +169,17 @@ def load_pms(path, mp):
     df = add_dims(df, stay, cancel)
     ch = [find_channel(a, sec.get('channels') or [], sec.get('unmatched')) for a in df['거래처']]
     df['_ch'] = [c for c, _ in ch]
-    df['_grp'] = [g for _, g in ch]
     df['_room'] = df['객실 타입'].replace('', '(미지정)') if '객실 타입' in df else '(미지정)'
     if '성인' in df or '유아동' in df:
         ad = df['성인'].map(num) if '성인' in df else 0
         kid = df['유아동'].map(num) if '유아동' in df else 0
         tot = ad + kid
         df['_party'] = ['(모름)' if t <= 0 else '1인' if t == 1 else '2인' if t == 2 else '3인+' for t in tot]
-        df['_kid'] = kid > 0 if '유아동' in df else False
     df['_plan'] = df['요금 유형'].replace('', '(없음)') if '요금 유형' in df else None
     df = df.drop(columns=[c for c in ('거래처',) if c in df])
     n_unk = sum(1 for _, g in ch if g == '미분류')
     if n_unk:   # 거래처 이름은 기업명일 수 있어 로그에 남기지 않는다
-        log.warning('채널 규칙에 없는 거래처 예약 %d건을 %s', n_unk, f"'{sec['unmatched']}'로 묶었습니다" if sec.get('unmatched') else '거래처 이름 그대로 씁니다')
+        log.warning("채널 규칙에 없는 거래처 예약 %d건을 '%s'로 묶었습니다", n_unk, sec.get('unmatched') or '기타 거래처')
     return df
 
 
@@ -218,12 +219,25 @@ def load_extra(chan, path, mp):
     return df
 
 
+def parse_day(v, label):
+    """명령 인자의 날짜 → Timestamp. 잘못된 값은 어느 인자인지 알려 준다."""
+    try:
+        return pd.Timestamp(v).normalize()
+    except (ValueError, TypeError):
+        raise ConfigError(f'{label} 날짜를 읽지 못했습니다: {v!r} (YYYY-MM-DD)')
+
+
 def period_of(A, df):
     if A.month:
-        p = pd.Period(A.month, 'M')
+        try:
+            p = pd.Period(A.month, 'M')
+        except ValueError:
+            raise ConfigError(f'--month 를 읽지 못했습니다: {A.month!r} (YYYY-MM)')
         return p.start_time.normalize(), p.end_time.normalize()
-    if A.start and A.end:
-        return pd.Timestamp(A.start), pd.Timestamp(A.end)
+    if A.start or A.end:
+        if not (A.start and A.end):
+            raise ConfigError('--start 와 --end 는 함께 적어야 합니다')
+        return parse_day(A.start, '--start'), parse_day(A.end, '--end')
     v = df[~df['_can']]
     return v['_ci'].min().normalize(), (v['_co'].max().normalize() - pd.Timedelta(days=1))
 
@@ -266,41 +280,48 @@ def cross(df, row, col, order=None):
 
 
 def occupancy(df, start, end, rooms):
-    """날짜×객실 타입 판매 객실박수 → 요일별·객실별 점유율, RevPAR. 대실은 점유율에서 뺀다."""
+    """날짜×객실 타입 판매 객실박수 → 요일별·객실별 점유율, RevPAR. 대실은 점유율에서 뺀다.
+    프로필 rooms 에 없는 객실 타입은 분모(객실 수)에 없으므로 분자에서도 빼고 박수를 경고로 알린다."""
     days = pd.date_range(start, end, freq='D')
-    cap_total = sum(int(v) for v in rooms.values()) if rooms else 0
+    cap_total = sum(int(v) for v in rooms.values())
     v = df[(~df['_can']) & df['_stay']]
-    sold, rev = {}, {}
+    day_sold, day_rev, room_wd = {}, {}, {}   # 날짜별 판매·매출, (객실, 요일)별 판매를 한 번에 모은다
+    skipped = {}
     for ci, n, room, amt in zip(v['_ci'].dt.normalize(), v['_n'], v['_room'], v['_amt']):
         per = amt / n if n else 0
         for i in range(int(n)):
             d = ci + pd.Timedelta(days=i)
-            if start <= d <= end:
-                key = (d, room if room in rooms else '(기타)')
-                sold[key] = sold.get(key, 0) + 1
-                rev[d] = rev.get(d, 0) + per
-    unknown = sorted({r for r in v['_room'] if r not in rooms})
+            if not (start <= d <= end):
+                continue
+            if room not in rooms:
+                skipped[room] = skipped.get(room, 0) + 1
+                continue
+            day_sold[d] = day_sold.get(d, 0) + 1
+            day_rev[d] = day_rev.get(d, 0) + per
+            k = (room, d.weekday())
+            room_wd[k] = room_wd.get(k, 0) + 1
+    if skipped:
+        log.warning('프로필 rooms 에 없는 객실 타입 %d개(객실박 %d)를 점유율에서 뺐습니다', len(skipped), sum(skipped.values()))
+    ndays = {w: sum(1 for d in days if d.weekday() == w) for w in range(7)}
     by_wd, by_room_wd = OrderedDict(), OrderedDict()
     for w in range(7):
-        ds = [d for d in days if d.weekday() == w]
-        if not ds:
+        if not ndays[w]:
             continue
-        s = sum(c for (d, r), c in sold.items() if d.weekday() == w)
-        rv = sum(x for d, x in rev.items() if d.weekday() == w)
-        cap = cap_total * len(ds)
-        by_wd[WD[w]] = {'days': len(ds), 'sold': s, 'occ': round(s / cap, 3) if cap else None,
+        s = sum(c for d, c in day_sold.items() if d.weekday() == w)
+        rv = sum(x for d, x in day_rev.items() if d.weekday() == w)
+        cap = cap_total * ndays[w]
+        by_wd[WD[w]] = {'days': ndays[w], 'sold': s, 'occ': round(s / cap, 3) if cap else None,
                         'revpar': int(round(rv / cap)) if cap else None, 'adr': int(round(rv / s)) if s else None}
         for room, cnt in rooms.items():
-            ss = sum(c for (d, r), c in sold.items() if d.weekday() == w and r == room)
-            by_room_wd.setdefault(room, OrderedDict())[WD[w]] = round(ss / (int(cnt) * len(ds)), 3) if cnt else None
-    s_all = sum(sold.values())
+            by_room_wd.setdefault(room, OrderedDict())[WD[w]] = round(room_wd.get((room, w), 0) / (int(cnt) * ndays[w]), 3) if cnt else None
+    s_all, r_all = sum(day_sold.values()), sum(day_rev.values())
     cap_all = cap_total * len(days)
-    daily = [{'date': d.strftime('%Y-%m-%d'), 'wd': WD[d.weekday()], 'sold': sum(c for (dd, r), c in sold.items() if dd == d),
-              'occ': round(sum(c for (dd, r), c in sold.items() if dd == d) / cap_total, 3) if cap_total else None} for d in days]
+    daily = [{'date': d.strftime('%Y-%m-%d'), 'wd': WD[d.weekday()], 'sold': day_sold.get(d, 0),
+              'occ': round(day_sold.get(d, 0) / cap_total, 3) if cap_total else None} for d in days]
     return {'days': len(days), 'capacity': cap_total, 'sold': s_all, 'occ': round(s_all / cap_all, 3) if cap_all else None,
-            'revpar': int(round(sum(rev.values()) / cap_all)) if cap_all else None,
-            'adr': int(round(sum(rev.values()) / s_all)) if s_all else None,
-            'by_weekday': by_wd, 'by_room_weekday': by_room_wd, 'daily': daily, 'unknown_rooms': unknown}
+            'revpar': int(round(r_all / cap_all)) if cap_all else None, 'adr': int(round(r_all / s_all)) if s_all else None,
+            'by_weekday': by_wd, 'by_room_weekday': by_room_wd, 'daily': daily,
+            'unknown_rooms': sorted(skipped), 'unknown_nights': sum(skipped.values())}
 
 
 # ---------------------------------------------------------------- 입금가 검산
@@ -319,9 +340,10 @@ def ota_model(name, conf, base_dir):
     if kind == 'agoda':
         for g in ((d.get('promotions') or {}).get('groups') or []):
             m['groups'].append({'name': g.get('name', ''), 'mode': g.get('mode', 'single'),
-                                'items': [{'name': it.get('nm') or it.get('name', ''), 'pct': float(it.get('pct') or 0), 'on': bool(it.get('on'))} for it in g.get('items') or []]})
+                                'items': [{'name': it.get('nm') or it.get('name', ''), 'pct': pct_of(it.get('pct'), f"{name} promotions.groups '{g.get('name', '')}'"),
+                                           'on': bool(it.get('on'))} for it in g.get('items') or []]})
         parts = (d.get('commission') or {}).get('parts') or []
-        m['b'] = sum(float(x['pct']) for x in parts if isinstance(x.get('pct'), (int, float)) and x.get('on', True))
+        m['b'] = sum(pct_of(x['pct'], f"{name} commission.parts '{x.get('name', '')}'") for x in parts if x.get('pct') not in (None, '') and x.get('on', True))
         if m['floor'] is None:
             m['floor'] = (d.get('property') or {}).get('floor')
         if m['rate'] is None:
@@ -329,14 +351,16 @@ def ota_model(name, conf, base_dir):
     else:
         for g in d.get('promoGroups') or []:
             m['groups'].append({'name': g.get('name', ''), 'mode': g.get('mode', 'single'),
-                                'items': [{'name': it.get('name', ''), 'pct': float(it.get('pct') or 0), 'on': bool(it.get('on'))} for it in g.get('items') or []]})
+                                'items': [{'name': it.get('name', ''), 'pct': pct_of(it.get('pct'), f"{name} promoGroups '{g.get('name', '')}'"),
+                                           'on': bool(it.get('on'))} for it in g.get('items') or []]})
         for x in d.get('commissionParts') or []:
-            if not isinstance(x.get('pct'), (int, float)) or x.get('on') is False:
+            if x.get('pct') in (None, '') or x.get('on') is False:
                 continue
+            v = pct_of(x['pct'], f"{name} commissionParts '{x.get('name', '')}'")
             if x.get('kind') == 'accel':
-                m['a'] += float(x['pct'])
+                m['a'] += v
             else:
-                m['b'] += float(x['pct'])
+                m['b'] += v
         if m['floor'] is None:
             m['floor'] = (d.get('property') or {}).get('floor') or (d.get('coef') or {}).get('floor')
         if m['rate'] is None:
@@ -355,6 +379,18 @@ def ota_model(name, conf, base_dir):
     else:
         m['ok'] = True
     return m
+
+
+def pct_of(v, where):
+    """property.json 의 할인·수수료 값 → 숫자. '10%' 같은 문자열도 받고, 못 읽으면 어느 칸인지 알려 준다."""
+    if v is None or v == '':
+        return 0.0
+    if isinstance(v, (int, float)):
+        return float(v)
+    try:
+        return float(str(v).replace('%', '').strip())
+    except ValueError:
+        raise ConfigError(f'{where} 의 값을 숫자로 읽지 못했습니다: {v!r}')
 
 
 def gsum(g):
@@ -380,8 +416,12 @@ def payout(m, D):
 
 
 def with_extra(m, D, x):
-    """현재 할인 D 에 x(0~1)를 더하거나 뺀 할인 합계"""
-    return 1 - (1 - D) * (1 - x) if m['across'] == 'mult' else D + x
+    """현재 할인 D 에 x(0~1)를 더하거나 뺀 할인 합계.
+    추가(x>0)는 새 프로모션이 붙는 것이라 부킹(곱셈)은 1−(1−D)(1−x), 나머지는 D+x.
+    축소(x<0)는 화면의 할인 합계를 그대로 x%p 줄이는 것이라 두 구조 모두 D+x."""
+    if x > 0 and m['across'] == 'mult':
+        return 1 - (1 - D) * (1 - x)
+    return D + x
 
 
 def max_extra(m, D):
@@ -488,6 +528,7 @@ def recommend(S, models, th):
         if ch not in models or ex['n'] < th['min_n']:
             continue
         nat = ex['dims'].get('nationality')
+        nat = [r for r in (nat or []) if not NAT_SKIP.search(r['key'])]   # 미상·묶음 값은 국가 타깃 대상이 아니다
         if nat:
             topn = max(nat, key=lambda r: r['share'])
             m = models.get(ch)
@@ -598,7 +639,7 @@ def render(S, recs, hotel, th):
         cols = list(wd.keys())
         t2 += '<h2>객실 타입 × 요일 점유율</h2>' + table(['객실 타입'] + cols, [[esc(r)] + [f'<td{cls(v.get(c))}>{pct(v.get(c))}</td>' for c in cols] for r, v in o['by_room_weekday'].items()])
     if o['unknown_rooms']:
-        t2 += f'<p class="note warn">프로필 rooms 에 없는 객실 타입은 (기타)로 묶어 전체 점유율에만 넣었다: {esc(", ".join(o["unknown_rooms"]))}</p>'
+        t2 += f'<p class="note warn">프로필 rooms 에 없는 객실 타입은 점유율에서 뺐다 (객실박 {o["unknown_nights"]:,}): {esc(", ".join(o["unknown_rooms"]))}</p>'
     t2 += '<h2>날짜별</h2>' + table(['날짜', '요일', '판매 객실박', '점유율'], [[d['date'], d['wd'], d['sold'], f'<td{cls(d["occ"])}>{pct(d["occ"])}</td>'] for d in o['daily']])
     # 탭 3: 채널별 할 일
     vc = {'OK': 'ok', '턱걸이': 'warn', '불가': 'bad'}
@@ -680,20 +721,19 @@ def build(A):
             g = mm[(~mm['_can']) & (mm['_ch'] == k)]
             for c in S['monthly']['cols']:
                 r[c] = int((g['_m'] == c).sum())
-    S['occupancy'] = occupancy(df, start, end, rooms) if rooms else {'by_weekday': {}, 'by_room_weekday': {}, 'daily': [], 'unknown_rooms': [], 'occ': None, 'revpar': None, 'adr': None, 'capacity': 0, 'days': 0, 'sold': 0}
+    S['occupancy'] = occupancy(df, start, end, rooms) if rooms else {'by_weekday': {}, 'by_room_weekday': {}, 'daily': [], 'unknown_rooms': [], 'unknown_nights': 0, 'occ': None, 'revpar': None, 'adr': None, 'capacity': 0, 'days': 0, 'sold': 0}
     for spec in A.extra or []:
         if '=' not in spec:
             raise ConfigError(f'--extra 는 채널=파일 형식입니다: {spec}')
         ch, path = spec.split('=', 1)
         ex = load_extra(ch.strip(), path.strip(), mp)
-        xs = pd.Timestamp(A.extra_start) if A.extra_start else start   # 국적처럼 표본이 적은 축은 더 긴 기간으로 본다
+        xs = parse_day(A.extra_start, '--extra-start') if A.extra_start else start   # 국적처럼 표본이 적은 축은 더 긴 기간으로 본다
         ex = ex[(ex['_ci'].dt.normalize() >= xs) & (ex['_ci'].dt.normalize() <= end)]
         if ex.empty:
             warnings.append(f'{ch} 파일에 {xs.date()} ~ {end.date()} 체크인이 없다.')
             continue
         e = {'n': int((~ex['_can']).sum()), 'dims': {}, 'period': [str(xs.date()), str(end.date())]}
-        for col, key, order in (('국적', 'nationality', None), ('요금제', 'plan', None), ('식사', 'meal', None), ('프로모션', 'promo', None),
-                                ('회원등급', 'member', None), ('쿠폰', 'coupon', None)):
+        for col, key in (('국적', 'nationality'), ('요금제', 'plan'), ('식사', 'meal'), ('프로모션', 'promo'), ('회원등급', 'member'), ('쿠폰', 'coupon')):
             if col in ex:
                 e['dims'][key] = sorted(dist(ex.assign(**{col: ex[col].replace('', '(없음)')}), col), key=lambda r: -r['n'])[:15]
         if '_party' in ex:
@@ -716,7 +756,7 @@ def build(A):
     recs = recommend(S, models, th)
     log.info('추천 %d건', len(recs))
     os.makedirs(A.out_dir, exist_ok=True)
-    out = {**S, 'recommendations': recs, 'thresholds': th, 'occupancy': {k: v for k, v in S['occupancy'].items()}}
+    out = {**S, 'recommendations': recs, 'thresholds': th}
     with open(os.path.join(A.out_dir, 'segments.json'), 'w', encoding='utf-8') as fh:
         json.dump(out, fh, ensure_ascii=False, indent=1, default=str)
     with open(os.path.join(A.out_dir, 'report.html'), 'w', encoding='utf-8') as fh:
