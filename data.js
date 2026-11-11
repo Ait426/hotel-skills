@@ -42,9 +42,9 @@ window.SKILLS = [
    "사용 안내.md"
   ],
   "lines": 246,
-  "updated": "2026-11-02",
+  "updated": "2026-11-12",
   "zip": "downloads/staytools-agoda-audit.zip",
-  "zipSize": 88777
+  "zipSize": 88792
  },
  {
   "name": "staytools-booking-rate-ops",
